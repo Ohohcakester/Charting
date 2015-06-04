@@ -1,0 +1,133 @@
+import testalgos
+import testcollection
+import parameters as para
+import display
+import similarity
+import grouping
+import tradingmeasure
+import pyswarm
+
+keys = ['Open', 'High', 'Low', 'Close', 'Volume']
+
+algosToTest = {
+    'sts': similarity.tsdist('stsDistance'),
+    'inf.norm': similarity.tsdist('inf.normDistance'),
+    'cort': similarity.tsdist('cortDistance'),
+    'lcss_05': similarity.tsdist('lcssDistance', 0.05),
+    'minkowski_25': similarity.lpNorms(2.5), #otherwise known as lp-norms
+    'minkowski_30': similarity.lpNorms(3),
+    'lbKeogh_3': similarity.tsdist('lb.keoghDistance', 3),
+    'dtw': similarity.tsdist('dtwDistance'),
+    'euclidean': similarity.tsdist('euclideanDistance'),
+    'fourier': similarity.tsdist('fourierDistance'),
+    'dissim': similarity.tsdist('dissimDistance'),
+}
+
+algosToTest = {
+    'sts': similarity.tsdist('stsDistance'),
+    'minkowski_25': similarity.lpNorms(2.5), #otherwise known as lp-norms
+}
+
+data = {}
+headers = []
+
+def optimise():
+    testCases = testcollection.readTests()
+
+    def testWithWeights(weights):
+        global keys
+        arrLen = len(keys)
+        weightDict = {}
+        for i in range(0,arrLen):
+            weightDict[keys[i]] = weights[i]
+        result = testAlgorithmsForAverageScore(testCases, weightDict)
+        print(str(result) + ' <- ' + str(weights))
+        return result
+
+
+    
+    ub = [1]*5
+    lb = [0]*5
+    xopt, fopt = pyswarm.pso(testWithWeights, lb, ub, maxiter=20)
+    
+    print('Weights:')
+    print(xopt)
+    print('Score = ' + str(fopt))
+
+
+
+
+
+def testAlgorithmsForAverageScore(testCases, weightDict):
+    global algosToTest, data, headers
+    allResults = []
+    weightDataFun = weightedData(weightDict)
+
+    for companyName in testCases.keys():
+        #print('Testing ' + companyName)
+        data, headers = para.readFile(display.nameToFile(companyName))
+        for key in algosToTest.keys():
+            #print('    algo ' + key)
+            algo = algosToTest[key]
+            for target in testCases[companyName]:
+                result = testAlgoWeighted(algo, target, weightDataFun)
+                if result != None:
+                    allResults.append(result)
+
+    averageResult = testalgos.computeAverageResult(allResults)
+    return averageResult[2]
+    return averageResult[0]*averageResult[1]
+
+
+def weightedData(weightDict):
+    def fun(data):
+        length = len(data['Close']) #length of any key in dict.
+
+        def weightedSum(i):
+            value = 0
+            for key in weightDict.keys():
+                value += data[key][i]*weightDict[key]
+            return value
+        return list(map(weightedSum, range(0,length)))
+    return fun
+
+
+def testAlgoWeighted(algo, target, weightDataFun):
+    global data
+    dates = data['Date']
+    groupsWeighted = grouping.groupUp(data['Day'], dates, weightDataFun(data))
+    groupsClose = grouping.groupUp(data['Day'], dates, data['Close'])
+
+    targetNext = target+4
+    if targetNext >= len(groupsWeighted):
+        return None
+    similarity.normalizeFuns = [similarity.byMean]
+    similarity.measureFun = algo
+    results = testalgos.compareAllGroupsBefore(groupsWeighted, target)
+    results2 = testalgos.compareAllGroupsBefore(groupsClose, targetNext)
+    
+    results.reverse()
+    results.sort(key=lambda x : x[2])
+    results2.sort(key=lambda x : x[2])
+
+    tradePolicy = tradingmeasure.largestReturn
+
+    totalRank = 0
+    lpScore = 0
+    totalMoney = 0
+    nResults = 10
+
+    for v in results[0:nResults]:
+        rank = testalgos.getRank(results2, v[0]+4)
+        totalRank += rank
+        money = tradingmeasure.computeWithFunOn(groupsClose[v[0]+4][2], groupsClose[targetNext][2], tradePolicy)
+        totalMoney += money
+        #ranks.append(rank)
+        lpScore += similarity.computeWith(groupsClose[v[0]+4], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
+    
+    predicted = testalgos.averageGroups(groupsClose, results[0:nResults], 4)
+    money = tradingmeasure.computeWithFunOn(predicted, groupsClose[targetNext][2], tradePolicy)
+    #totalRank *= 100        # normalize totalRank for equal weightage.
+    #totalRank /= len(results2) # normalize totalRank for equal weightage.
+
+    return (lpScore/nResults, totalRank/nResults, money)
