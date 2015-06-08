@@ -5,7 +5,14 @@ import numpy
 from scipy.interpolate import interp1d
 
 def main():
-    bestPolyFit()
+    choice = 0
+
+    options = {
+        0:bestPolyFit,
+        1:testPolyFit,
+        2:testCubicFit,
+    }
+    options[choice]()
 
 
 

@@ -16,7 +16,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 3
+    choice = 1
 
     options = {
         0:runTests,
@@ -36,8 +36,17 @@ def runTests():
     #compareAlgorithms('table.csv')
 
 
+def getRandomSublist(arr, size):
+    import random
+    arr = list(arr)
+    random.shuffle(arr)
+    return arr[:size]
+
+
 def runDataSelect():
     dataFiles = listDataFiles()
+    dataFiles = getRandomSublist(dataFiles, 20)
+
     for f in dataFiles:
         dataselect.run(f)
     #dataselect.run('data/ABERDEEN_ASIA_PACIFIC_INCOME_FD.csv')
@@ -46,7 +55,8 @@ def runDataSelect():
 def findDoubleTops():
     dataFiles = listDataFiles()
     for f in dataFiles:
-        intervals = dataselect.findDoubleTops(f)
+        data, headers = para.readFile(f)
+        intervals = dataselect.findDoubleTops(data)
         if (len(intervals) > 0):
             print(display.getNameOnly(f))
             print(intervals)

@@ -129,3 +129,12 @@ def averageLast(n):
     return fun
 
 """ REGION: VARIABLE PARAMETER MAP FUNCTIONS - END """
+
+
+""" REGION: UTILITY - START """
+
+
+def averageLastList(dataList, n):
+    return averageLast(n)([dataList], len(dataList)) 
+
+""" REGION: UTILITY - END """

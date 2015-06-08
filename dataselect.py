@@ -4,35 +4,61 @@ import grouping
 #Format of group:
 # (startindex, endindex, data, index) #bitmap deprecated
 
+
 def run(fileName):
     data, headers = para.readFile(fileName)
     dates = data['Date']
     if (len(dates) == 0):
         #print('Empty File')
         return
-    close = data['Close']
-    groups = grouping.groupUp(data['Day'], dates, close)
+    groups = grouping.groupUp(data['Day'], dates, data['Close'])
 
-    matches = findMatches(close, groups)
-    #print('Found ' + str(len(matches)) + ' matches')
+    matches = findMatches(data, groups)
+    #print('Found ' + str(len(matches)) + 'matches')
     if (len(matches) <= 0): return #print only when there is at least one match.
     print(display.getNameOnly(fileName))
     for group in matches:
         display.printgroupattrs(group, dates)
 
 
-def findMatches(fulldata, groups):
-    global criteriaType, criteriaFun
-    return criteriaType(fulldata, groups, criteriaFun)
 
-def findMatchesWith(fulldata, groups, criteriaType, criteriaFun):
-    return criteriaType(fulldata, groups, criteriaFun)
+def findMatches(data, groups):
+    chooseType = 0
+    chooseFun = 2
+
+    criteriaType = [
+        byPoints,
+        byIndividual,
+        ][chooseType]
+
+    criteriaFun = [
+        breakHigh(yearsToDays(1), yearsToDays(5)),
+        compose(getEndPoints, findDoubleTops),
+        compose(getEndPoints, increasingAveragesFilter(data['Close']), findDoubleTops),
+        ][chooseFun]
+
+    # corresponds to the criteriaFuns.
+    # true iff criteriaFun accepts a single time series data (close) instead of the data object.
+    singleTS = [
+        True,
+        False,
+        False,
+        ][chooseFun]
+
+    if singleTS: data = data['Close']
+
+    return criteriaType(data, groups, criteriaFun)
+
+
+def findMatchesWith(data, groups, criteriaType, criteriaFun):
+    return criteriaType(data, groups, criteriaFun)
 
 
 def byIndividual(fulldata, groups, criteria):
     def fun(group):
         return criteria(fulldata, group[0], group[1])
     return filter(fun, groups)
+
 
 # Assumes groups are sorted in chronological order (increasing)
 def byPoints(fulldata, groups, criteria):
@@ -83,9 +109,43 @@ def breakHigh(minDays, maxDays):
 
 """ REGION: POINTS CRITERION - END """
 
+""" REGION: INTERVAL FILTERS - START """
 
+def getEndPoints(intervals):
+    return list(map(lambda v : v[1], intervals))
+
+
+
+def increasingAveragesFilter(dataList):
+    avg10 = para.averageLastList(dataList, 10)
+    avg30 = para.averageLastList(dataList, 30)
+    avg60 = para.averageLastList(dataList, 60)
+    limit = 60
+
+    def fun(interval): 
+        point = interval[0]
+        if point < limit: return False
+        return avg10[point] > avg30[point] and avg30[point] > avg60[point]
+
+    return lambda intervals : filter(fun, intervals)
+
+
+
+
+
+""" REGION: INTERVAL FILTERS - END """
 
 """ REGION: UTILITY - START """
+
+def compose(*funs):
+    # reverse the list.
+    funs = funs[::-1]
+    def composed(x):
+        for fun in funs:
+            x = fun(x)
+        return x
+    return composed
+
 
 def findFirstGroupContainingPoint(groups, point):
     for group in groups: # group[0] = startIndex, group[1] = endIndex
@@ -141,28 +201,55 @@ def generateMaxIndexList(arr, wSize):
     return resultList
 
 
-def getEndPoints(intervals):
-    return list(map(lambda v : v[1], intervals))
-
-
 def peakIdentifierFun(dataList, peakGap):
+    windowMax = generateMaxIndexList(dataList, peakGap*2)
     def isPeak(i):
-        return i >= peakGap and i + peakGap < len(high) and \
-            high[i] >= high[windowHighs[i-peakGap]]
+        return i >= peakGap and i + peakGap < len(dataList) and \
+            dataList[i] >= dataList[windowMax[i-peakGap]]
     return isPeak
 
+# converts a boolean function to a functoin that returns high for True, low for False.
+def boolToIntFun(boolFun, low, high):
+    def intFun(x):
+        if boolFun(x):
+            return high
+        return low
+    return intFun
 
-def findDoubleTops(fileName, plotGraphs = False):
-    import matplotlib.pyplot as plt
-    data, headers = para.readFile(fileName)
+
+def plotDoubleTopsFiltered(data, plotGraphs = False, plotPeaks = False, start = None, end = None):
+    if start == None: start = 0
+    if end == None: end = len(data['High'])
+
+    intervals = findDoubleTops(data, start=start, end=end)
+    intervals = increasingAveragesFilter(data['Close'])(intervals)
+
+    boxlow = 0
+    boxhigh = 100
+
+    if plotGraphs:
+        import matplotlib.pyplot as plt
+        def plotBox(i,j):
+            record = [boxlow]*(end-start)
+            for k in range(i,j+1):
+                record[k-start] = boxhigh
+            plt.plot(record)
+        for interval in intervals:
+            plotBox(interval[0], interval[1])
+
+
+    findDoubleTops(data, plotGraphs, plotPeaks, start=start, end=end)
+    
+
+# start / end = None means default values.
+def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, end = None):
     dates = data['Date']
-    high = data['High']
-    low = data['Low']
-    close = data['Close']
+    high, low, close = data['High'], data['Low'], data['Close']
+    if not plotGraphs: plotPeaks = False
+    if plotGraphs: import matplotlib.pyplot as plt
 
-    start = 0
-    end = len(high)
-    #start = 1200
+    if start == None: start = 0
+    if end == None: end = len(high)
     
     peakGap = 5
     trenchValueTolerance = 0.85
@@ -170,24 +257,15 @@ def findDoubleTops(fileName, plotGraphs = False):
     toleranceUp = 1.05
 
     if start+(peakGap*2) >= end: return []
-
     graphBaseValue = min(high[start:end])
     graphPeakValue = max(high[start:end])
 
-    windowHighs = generateMaxIndexList(high, peakGap*2)
+    # define functions
+    isPeak = peakIdentifierFun(high, peakGap)
+    if plotPeaks:
+        isPeakInt = boolToIntFun(isPeak, graphBaseValue, graphPeakValue)
 
     intervals = []
-
-    def isPeak(i):
-        return i >= peakGap and i + peakGap < len(high) and \
-            high[i] >= high[windowHighs[i-peakGap]]
-            #high[i] >= high[windowHighs[i-peakGap]] and \
-            #high[i] >= high[windowHighs[i+1]]
-
-    #def isPeakInt(i):
-    #    if isPeak(i):
-    #        return graphPeakValue
-    #    return graphBaseValue
 
     def addInterval(a, b):
         for interval in intervals:
@@ -195,12 +273,12 @@ def findDoubleTops(fileName, plotGraphs = False):
                 return
         intervals.append((a,b))
 
-
-    def addRecord(i,j, v):
-        record = [graphBaseValue]*(end-start)
-        for k in range(i,j+1):
-            record[k-start] = v#high[i]
-        plt.plot(record)
+    if plotGraphs:
+        def plotBox(i,j, value):
+            record = [graphBaseValue]*(end-start)
+            for k in range(i,j+1):
+                record[k-start] = value
+            plt.plot(record)
 
     peaks = list(filter(isPeak, range(start,end)))
 
@@ -215,17 +293,15 @@ def findDoubleTops(fileName, plotGraphs = False):
                 break
             if ratio <= toleranceDown:
                 continue
+
             # toleranceDown < ratio < toleranceUp
             if curr+1 >= next:
                 continue
             if min(high[curr+1:next]) >= toleranceDown*min(currValue, nextValue):
                 continue
 
-
             trenchValue = min(low[curr+1:next])
             peakValue = max(currValue, nextValue)
-
-            #addRecord(curr,next, high[curr])
 
             leftTail = -1
             rightTail = -1
@@ -249,26 +325,31 @@ def findDoubleTops(fileName, plotGraphs = False):
             if leftTail == -1:
                 continue
 
-            addRecord(curr,next, high[curr])
-            addRecord(curr,next, high[next])
-            addRecord(leftTail,rightTail-1, trenchValue)
+            if plotGraphs:
+                plotBox(curr,next, high[curr])
+                plotBox(curr,next, high[next])
+                plotBox(leftTail,rightTail-1, trenchValue)
             addInterval(leftTail,rightTail)
 
-    #peaks = list(map(isPeakInt, range(start,end)))
-    #plt.plot(peaks)
-    plt.plot(high[start:end])
-    plt.show()
+    if plotPeaks:
+        peaks = list(map(isPeakInt, range(start,end)))
+        plt.plot(peaks)
+    if plotGraphs:
+        plt.plot(high[start:end])
+        plt.show()
     return intervals
 
 
 """ REGION: UTILITY - END """
 
-criteriaType = byPoints
-criteriaFun = breakHigh(yearsToDays(1), yearsToDays(5))
-
 
 def main():
-    findDoubleTops('data/AKAMAI_TECHNOLOGIES_INC.csv', True)
+    data, headers = para.readFile('data/AKAMAI_TECHNOLOGIES_INC.csv')
+
+    start = None
+    end = None
+
+    plotDoubleTopsFiltered(data, True, False, start=start, end=end)
 
 
 
