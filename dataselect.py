@@ -201,6 +201,15 @@ def generateMaxIndexList(arr, wSize):
     return resultList
 
 
+def generateMinIndexList(arr, wSize):
+    maxValue = max(arr)
+    negList = list(map(lambda x : maxValue - x, arr))
+    negList = generateMaxIndexList(negList, len(negList))
+    return list(map(lambda x : maxValue - x, negList))
+
+
+
+
 def peakIdentifierFun(dataList, peakGap):
     windowMax = generateMaxIndexList(dataList, peakGap*2)
     def isPeak(i):

@@ -36,7 +36,10 @@ def readFile(fileName):
     convertformat('Close', float)
     convertformat('Volume', int)
     #convertformat('Adj Close', float)
-    #applyVarParameter('AvgClose', 'Close', averageLast(10))
+    applyVarParameter('DiffClose', 'Close', runningAverageDifference(20,40))
+    applyVarParameter('AvgClose', 'Close', averageLast(10))
+    applyVarParameter('DiffCloseSign', 'Close', toSign(runningAverageDifference(20, 40)))
+    applyVarParameter('Running', 'Close', runningAverageDifference(1,20))
 
     return data, headers
 
@@ -114,6 +117,30 @@ def mapDateToDay(d):
 """ REGION: FIXED PARAMETER MAP FUNCTIONS - END """
 
 """ REGION: VARIABLE PARAMETER MAP FUNCTIONS - START """
+
+def toSign(mapFun):
+    def sgn(x):
+        if x > 0:
+            return 1
+        elif x < 0:
+            return -1
+        return 0
+
+    def fun(inputs, size):
+        return list(map(sgn, mapFun(inputs, size)))
+
+    return fun
+
+def runningAverageDifference(n1, n2):
+    avg1 = averageLast(n1)
+    avg2 = averageLast(n2)
+
+    def fun(inputs, size):
+        li1 = avg1(inputs, size)
+        li2 = avg2(inputs, size)
+        return [a-b for a,b in zip(li1,li2)]
+
+    return fun
 
 
 def averageLast(n):

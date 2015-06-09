@@ -16,7 +16,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 1
+    choice = 5
 
     options = {
         0:runTests,
@@ -63,19 +63,17 @@ def findDoubleTops():
 
 def viewGraph():
     fileName = 'data/F_5_NETWORKS_INC.csv'
-    start, end = 1139, 1204
+    start, end = 200,1000
 
     data, headers = para.readFile(fileName)
     dates = data['Date']
-    dhigh = data['High']
-    dlow = data['Low']
-    dclose = data['Close']
-    dopen = data['Open']
+    #lines = ['High', 'Low', 'Close', 'Open']
+    lines = ['Running', 'DiffClose', 'DiffCloseSign']
 
-    plt.plot(dhigh[start:end])
-    plt.plot(dlow[start:end])
-    plt.plot(dclose[start:end])
-    plt.plot(dopen[start:end])
+    for line in lines:
+        #plt.plot(data[line][start:end])
+        plt.plot(similarity.byMean(data[line][start:end]))
+
     plt.show()
 
 

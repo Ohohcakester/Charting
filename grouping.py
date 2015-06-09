@@ -58,12 +58,12 @@ def nextndays(index, days, ndays):
 
 
 # each group is a tuple (startindex, endindex, data, index)
-# bitmap displays which days are missing.
-def groupUp(days, dates, datalist):
+# minDay is the day to start searching from.
+def groupUp(days, dates, datalist, minDay = 0):
     curr = 0
     lastmonth = -1
     groups = []
-    for i in range(0,len(days)):
+    for i in range(minDay,len(days)):
         if dates[i].month != lastmonth and dates[i].day < 7:
             lastmonth = dates[i].month
             #first monday of month
