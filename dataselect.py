@@ -181,7 +181,7 @@ def generateMaxIndexList(arr, wSize):
             maxIndexList[i] = maxIndexList[i+1]
 
     resultList.append(maxIndexList[0])
-    for i in range(1,len(arr)-wSize):
+    for i in range(1,len(arr)-wSize+1):
         if i > nextMaxPoint:
             nextMaxPoint = maxIndexList[i]
 
@@ -204,8 +204,7 @@ def generateMaxIndexList(arr, wSize):
 def generateMinIndexList(arr, wSize):
     maxValue = max(arr)
     negList = list(map(lambda x : maxValue - x, arr))
-    negList = generateMaxIndexList(negList, len(negList))
-    return list(map(lambda x : maxValue - x, negList))
+    return generateMaxIndexList(negList, wSize)
 
 
 
