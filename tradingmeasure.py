@@ -56,6 +56,14 @@ def dontSell(data):
     return (0,len(data)-1)
 
 
+def sellOrKeep(data):
+    last = len(data)-1
+    if data[last] < data[0]:
+        return (0,0)
+    else:
+        return (0,last)
+
+
 def largestReturn(data):
     data = similarity.byFirst(data)
     runningMin = data[0]

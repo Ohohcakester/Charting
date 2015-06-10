@@ -3,7 +3,8 @@
 def readTests():
     d = {}
     #f = open('testcases/truncated.txt')
-    f = open('testcases/formatted.txt')
+    #f = open('testcases/formatted.txt')
+    f = open('testcases/dtf_formatted.txt')
     for line in f:
         args = line.split(' ', 1)
         name = args[0]

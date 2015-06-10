@@ -5,18 +5,27 @@ import rbind
 
 """ REGION: MAIN FUNCTIONS - START """
 
+def computeConditionScore(group1, group2):
+    LARGE_CONSTANT = 10000
+    def match(x,y):
+        if x == y: return 1
+        return 0
+    return LARGE_CONSTANT * sum([match(x,y) for x,y in zip(group1[4], group2[4])])
+
 # Computes the similarity score between two groups.
 def compute(group1, group2):
     global measureFun
     data1, data2 = group1[2], group2[2]
     data1, data2 = normalize(data1), normalize(data2)
-    return measureFun(data1, data2)
+
+    return measureFun(data1, data2) + computeConditionScore(group1, group2)
 
 def computeWith(group1, group2, normalizeFuns, measureFun):
     data1, data2 = group1[2], group2[2]
     data1 = normalizeWith(data1, normalizeFuns)
     data2 = normalizeWith(data2, normalizeFuns)
-    return measureFun(data1, data2)
+
+    return measureFun(data1, data2) + computeConditionScore(group1, group2)
 
 # Returns two arrays formed from parsing the bitmaps.
 def repairdata(group1, group2):
@@ -126,6 +135,7 @@ def tsdist(measureName, *args, **kwargs):
     def fun(data1, data2):
         return rbind.run_ts(data1, data2, measureName, *args, **kwargs)
     return fun
+
 
 
 """ REGION: SIMILARITY MEASURES - END """

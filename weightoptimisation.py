@@ -7,7 +7,7 @@ import grouping
 import tradingmeasure
 import pyswarm
 
-keys = ['Open', 'High', 'Low', 'Close', 'Volume']
+keys = ['Close', 'DiffClose', 'AvgClose', 'DiffCloseSign', 'Running']
 
 algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
@@ -95,8 +95,8 @@ def weightedData(weightDict):
 def testAlgoWeighted(algo, target, weightDataFun):
     global data
     dates = data['Date']
-    groupsWeighted = grouping.groupUp(data['Day'], dates, weightDataFun(data))
-    groupsClose = grouping.groupUp(data['Day'], dates, data['Close'])
+    groupsWeighted = grouping.groupUp(data, weightDataFun(data))
+    groupsClose = grouping.groupUp(data, data['Close'])
 
     targetNext = target+4
     if targetNext >= len(groupsWeighted):
@@ -110,7 +110,7 @@ def testAlgoWeighted(algo, target, weightDataFun):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    tradePolicy = tradingmeasure.largestReturn
+    tradePolicy = tradingmeasure.sellOrKeep
 
     totalRank = 0
     lpScore = 0

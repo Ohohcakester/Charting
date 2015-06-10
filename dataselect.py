@@ -1,26 +1,6 @@
-import display
 import parameters as para
-import grouping
 #Format of group:
 # (startindex, endindex, data, index) #bitmap deprecated
-
-
-def run(fileName):
-    data, headers = para.readFile(fileName)
-    dates = data['Date']
-    if (len(dates) == 0):
-        #print('Empty File')
-        return
-    groups = grouping.groupUp(data['Day'], dates, data['Close'])
-
-    matches = findMatches(data, groups)
-    #print('Found ' + str(len(matches)) + 'matches')
-    if (len(matches) <= 0): return #print only when there is at least one match.
-    print(display.getNameOnly(fileName))
-    for group in matches:
-        display.printgroupattrs(group, dates)
-
-
 
 def findMatches(data, groups):
     chooseType = 0
@@ -34,7 +14,7 @@ def findMatches(data, groups):
     criteriaFun = [
         breakHigh(yearsToDays(1), yearsToDays(5)),
         compose(getEndPoints, findDoubleTops),
-        compose(getEndPoints, increasingAveragesFilter(data['Close']), findDoubleTops),
+        compose(getEndPoints, findDoubleTopsFiltered),
         ][chooseFun]
 
     # corresponds to the criteriaFuns.
@@ -50,7 +30,7 @@ def findMatches(data, groups):
     return criteriaType(data, groups, criteriaFun)
 
 
-def findMatchesWith(data, groups, criteriaType, criteriaFun):
+def findMatchesWith(data, groups, criteriaType, criteriaFun): #TODO: there's a bug. it returns nothing!! 
     return criteriaType(data, groups, criteriaFun)
 
 
@@ -146,6 +126,10 @@ def compose(*funs):
         return x
     return composed
 
+def using(dataType):
+    def fun(data):
+        return data[dataType]
+    return fun
 
 def findFirstGroupContainingPoint(groups, point):
     for group in groups: # group[0] = startIndex, group[1] = endIndex
@@ -224,6 +208,10 @@ def boolToIntFun(boolFun, low, high):
         return low
     return intFun
 
+def findDoubleTopsFiltered(data):
+    intervals = findDoubleTops(data)
+    return increasingAveragesFilter(data['Close'])(intervals)
+    
 
 def plotDoubleTopsFiltered(data, plotGraphs = False, plotPeaks = False, start = None, end = None):
     if start == None: start = 0
@@ -247,7 +235,7 @@ def plotDoubleTopsFiltered(data, plotGraphs = False, plotPeaks = False, start = 
 
 
     findDoubleTops(data, plotGraphs, plotPeaks, start=start, end=end)
-    
+
 
 # start / end = None means default values.
 def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, end = None):
@@ -359,6 +347,18 @@ def main():
 
     plotDoubleTopsFiltered(data, True, False, start=start, end=end)
 
+
+conditionBreakHigh = (byPoints,
+                    compose(breakHigh(yearsToDays(1), yearsToDays(5)), using('Close'))
+                    )
+
+conditionDoubleTops = (byPoints,
+                    compose(getEndPoints, findDoubleTops)
+                    )
+
+conditionDoubleTopsFiltered = (byPoints,
+                    compose(getEndPoints, findDoubleTopsFiltered),
+                    )
 
 
 if __name__ == '__main__':

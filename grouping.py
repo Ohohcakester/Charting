@@ -1,3 +1,4 @@
+import dataselect
 
 # You have to configure this manually to use getweekday/isweekend/nextfewweeks.
 firstsaturday = 1
@@ -57,12 +58,20 @@ def nextndays(index, days, ndays):
 
 
 
-# each group is a tuple (startindex, endindex, data, index)
+# each group is a tuple (startindex, endindex, data, index, conditionData)
 # minDay is the day to start searching from.
-def groupUp(days, dates, datalist, minDay = 0):
+def groupUp(data, datalist, minDay = 0):
+    groups = splitIntoGroups(data, datalist, minDay)
+    return list(map(lambda group : group + ((),), groups))
+
+
+def splitIntoGroups(data, datalist, minDay = 0):
     curr = 0
     lastmonth = -1
     groups = []
+    days = data['Day']
+    dates = data['Date']
+
     for i in range(minDay,len(days)):
         if dates[i].month != lastmonth and dates[i].day < 7:
             lastmonth = dates[i].month
@@ -76,3 +85,29 @@ def groupUp(days, dates, datalist, minDay = 0):
                 group = (start, end, datalist[start:end], len(groups))
                 groups.append(group)
     return groups
+
+
+# Each condition must be in a tuple (criteriaType, criteriaFun)
+# each group is a tuple (startindex, endindex, data, index, conditionData)
+def groupWithConditionData(*conditions):
+    def fun(data, datalist, minDay = 0):
+        groups = splitIntoGroups(data, datalist, minDay)
+        conditionData = []
+        for i in range(0,len(groups)): conditionData.append([])
+
+        for condition in conditions:
+            matches = dataselect.findMatchesWith(data, groups, condition[0], condition[1])
+            for i in range(0,len(groups)):
+                conditionData[i].append(groups[i] in matches)
+        
+        conditionData = list(map(tuple, conditionData))
+        def reformGroup(group, cd):
+            return group + (cd,)
+
+        return list([reformGroup(group,cd) for group,cd in zip(groups,conditionData)])
+    return fun
+
+
+def redefineGroupingConditions(*conditions):
+    global groupUp
+    groupUp = groupWithConditionData(*conditions)

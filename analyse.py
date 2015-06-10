@@ -10,13 +10,14 @@ import grouping
 import display
 import testalgos
 import weightoptimisation
+import util
 
 # parameters.readFile will write to two variables:
 data = {}
 headers = []
 
 def main():
-    choice = 5
+    choice = 0
 
     options = {
         0:runTests,
@@ -31,25 +32,41 @@ def main():
 
 
 def runTests():
+    #grouping.redefineGroupingConditions(dataselect.conditionBreakHigh, dataselect.conditionDoubleTops, dataselect.conditionDoubleTopsFiltered)
+    #grouping.redefineGroupingConditions(dataselect.conditionBreakHigh)
+    grouping.redefineGroupingConditions(dataselect.conditionDoubleTopsFiltered)
+
     testCases = testcollection.readTests()
     testalgos.compareAlgorithmsWithData(testCases)
     #compareAlgorithms('table.csv')
 
 
-def getRandomSublist(arr, size):
-    import random
-    arr = list(arr)
-    random.shuffle(arr)
-    return arr[:size]
-
-
+""" REGION: DATA SELECT - START """
 def runDataSelect():
     dataFiles = listDataFiles()
-    dataFiles = getRandomSublist(dataFiles, 20)
+    #dataFiles = util.getRandomSublist(dataFiles, 20)
 
     for f in dataFiles:
-        dataselect.run(f)
+        runDataSelectOn(f)
     #dataselect.run('data/ABERDEEN_ASIA_PACIFIC_INCOME_FD.csv')
+
+
+def runDataSelectOn(fileName):
+    data, headers = para.readFile(fileName)
+    dates = data['Date']
+    if (len(dates) == 0):
+        #print('Empty File')
+        return
+    groups = grouping.groupUp(data, data['Close'])
+
+    matches = dataselect.findMatches(data, groups)
+    #print('Found ' + str(len(matches)) + 'matches')
+    if (len(matches) <= 0): return #print only when there is at least one match.
+    print(display.getNameOnly(fileName))
+    for group in matches:
+        display.printgroupattrs(group, dates)
+
+""" REGION: DATA SELECT - END """
 
 
 def findDoubleTops():
@@ -86,7 +103,7 @@ def runVisualise():
     data, headers = para.readFile(fileName)
     dates = data['Date']
     close = data['Close']
-    groups = grouping.groupUp(data['Day'], dates, close)
+    groups = grouping.groupUp(data, data['Close'])
 
     target = targetGroup
     targetNext = target+4

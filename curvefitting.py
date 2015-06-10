@@ -49,7 +49,7 @@ def testPolyFit():
     data, headers = para.readFile('data/A_C_I_WORLDWIDE_INC.csv')
     dates = data['Date']
     close = data['Close']
-    #groups = grouping.groupUp(data['Day'], dates, close)
+    #groups = grouping.groupUp(data, close)
     start = 80
     end = 200
 
@@ -72,7 +72,7 @@ def bestPolyFit():
     data, headers = para.readFile('data/3_D_SYSTEMS_CORP_DEL.csv')
     dates = data['Date']
     close = data['Close']
-    #groups = grouping.groupUp(data['Day'], dates, close)
+    #groups = grouping.groupUp(data, close)
     start = 230
     end = 379
 

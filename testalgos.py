@@ -3,6 +3,7 @@ import display
 import grouping
 import tradingmeasure
 import parameters as para
+import util
 
 def addsimilarity(results, groups, i, j):
     sim = similarity.compute(groups[i], groups[j])
@@ -85,7 +86,7 @@ algosToTest = {
     'tquest': similarity.tsdist('tquestDistance', tau=0.5), #seems to do nothing...?
     'wav': similarity.tsdist('wavDistance'),
 }
-algosToTestAAAA = {
+algosToTestXXX = {
     'sts': similarity.tsdist('stsDistance'),
     'inf.norm': similarity.tsdist('inf.normDistance'),
     'cort': similarity.tsdist('cortDistance'),
@@ -139,7 +140,7 @@ def compareAlgorithmsWithData(testCases):
                     #printResult(key, result)
 
     averageResults = {}
-    f = open('testresults.txt', 'w+')
+    f = open('testresults_dtf.txt', 'w+')
     for key in allResults.keys():
         averageResult = computeAverageResult(allResults[key])
         s = formatResult(key, averageResult)
@@ -194,7 +195,7 @@ def testAlgo(algo, target):
 #def testAlgoOnData(algo, target, dataList):
     global data
     dates = data['Date']
-    groups = grouping.groupUp(data['Day'], dates, data['Close'])
+    groups = grouping.groupUp(data, data['Close'])
 
     targetNext = target+4
     if targetNext >= len(groups):
@@ -208,7 +209,8 @@ def testAlgo(algo, target):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    tradePolicy = tradingmeasure.largestReturn
+    tradePolicy = tradingmeasure.sellOrKeep
+    #tradePolicy = tradingmeasure.largestReturn
 
     totalRank = 0
     lpScore = 0
