@@ -86,7 +86,7 @@ algosToTest = {
     'tquest': similarity.tsdist('tquestDistance', tau=0.5), #seems to do nothing...?
     'wav': similarity.tsdist('wavDistance'),
 }
-algosToTestXXX = {
+algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
     'inf.norm': similarity.tsdist('inf.normDistance'),
     'cort': similarity.tsdist('cortDistance'),
@@ -140,7 +140,7 @@ def compareAlgorithmsWithData(testCases):
                     #printResult(key, result)
 
     averageResults = {}
-    f = open('testresults_dtf.txt', 'w+')
+    f = open('testresults_cnt.txt', 'w+')
     for key in allResults.keys():
         averageResult = computeAverageResult(allResults[key])
         s = formatResult(key, averageResult)
@@ -197,7 +197,7 @@ def testAlgo(algo, target):
     dates = data['Date']
     groups = grouping.groupUp(data, data['Close'])
 
-    targetNext = target+4
+    targetNext = target+util.ma
     if targetNext >= len(groups):
         return None
     similarity.normalizeFuns = [similarity.byMean]
@@ -209,7 +209,8 @@ def testAlgo(algo, target):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    tradePolicy = tradingmeasure.sellOrKeep
+    #tradePolicy = tradingmeasure.sellOrKeep
+    tradePolicy = tradingmeasure.dontSell
     #tradePolicy = tradingmeasure.largestReturn
 
     totalRank = 0
@@ -217,16 +218,16 @@ def testAlgo(algo, target):
     totalMoney = 0
     nResults = 10
     for v in results[0:nResults]:
-        rank = getRank(results2, v[0]+4)
+        rank = getRank(results2, v[0]+util.ma)
         totalRank += rank
-        money = tradingmeasure.computeWithFunOn(groups[v[0]+4][2], groups[targetNext][2], tradePolicy)
+        money = tradingmeasure.computeWithFunOn(groups[v[0]+util.ma][2], groups[targetNext][2], tradePolicy)
         totalMoney += money
         #ranks.append(rank)
-        lpScore += similarity.computeWith(groups[v[0]+4], groups[targetNext], [similarity.byFirst], similarity.lpNorms(2))
+        lpScore += similarity.computeWith(groups[v[0]+util.ma], groups[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
-    predicted = averageGroups(groups, results[0:nResults], 4)
+    predicted = averageGroups(groups, results[0:nResults], util.ma)
     money = tradingmeasure.computeWithFunOn(predicted, groups[targetNext][2], tradePolicy)
-
+    print(money)
     #totalRank *= 100        # normalize totalRank for equal weightage.
     #totalRank /= len(results2) # normalize totalRank for equal weightage.
 

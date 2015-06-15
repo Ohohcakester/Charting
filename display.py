@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import similarity
 import analyse
+import util
 
 def plotgroup(data, group):
     start, end = group[0], group[1]
@@ -66,7 +67,7 @@ def printgroupattrs(group, dates):
 
 def plotAverageHighLow(groups, results, compareTo):
     import statistics
-    lists = list(map(lambda v : groups[v[0]+4][2][:], results))
+    lists = list(map(lambda v : groups[v[0]+util.ma][2][:], results))
     for i in range(0,len(lists)):
         first = lists[i][0]
         for j in range(0,len(lists[i])):

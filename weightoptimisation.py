@@ -6,6 +6,7 @@ import similarity
 import grouping
 import tradingmeasure
 import pyswarm
+import dataselect
 
 keys = ['Close', 'DiffClose', 'AvgClose', 'DiffCloseSign', 'Running']
 
@@ -25,7 +26,6 @@ algosToTest = {
 
 algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
-    'minkowski_25': similarity.lpNorms(2.5), #otherwise known as lp-norms
 }
 
 data = {}
@@ -33,6 +33,8 @@ headers = []
 
 def optimise():
     testCases = testcollection.readTests()
+    #grouping.redefineGroupingConditions(dataselect.conditionBreakHigh)
+    grouping.redefineGroupingConditions(dataselect.conditionDoubleTopsFiltered)
 
     def testWithWeights(weights):
         global keys
@@ -43,8 +45,6 @@ def optimise():
         result = testAlgorithmsForAverageScore(testCases, weightDict)
         print(str(result) + ' <- ' + str(weights))
         return result
-
-
     
     ub = [1]*5
     lb = [0]*5
@@ -98,7 +98,7 @@ def testAlgoWeighted(algo, target, weightDataFun):
     groupsWeighted = grouping.groupUp(data, weightDataFun(data))
     groupsClose = grouping.groupUp(data, data['Close'])
 
-    targetNext = target+4
+    targetNext = target+util.ma
     if targetNext >= len(groupsWeighted):
         return None
     similarity.normalizeFuns = [similarity.byMean]
@@ -110,7 +110,7 @@ def testAlgoWeighted(algo, target, weightDataFun):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    tradePolicy = tradingmeasure.sellOrKeep
+    tradePolicy = tradingmeasure.dontSell
 
     totalRank = 0
     lpScore = 0
@@ -118,14 +118,14 @@ def testAlgoWeighted(algo, target, weightDataFun):
     nResults = 10
 
     for v in results[0:nResults]:
-        rank = testalgos.getRank(results2, v[0]+4)
+        rank = testalgos.getRank(results2, v[0]+util.ma)
         totalRank += rank
-        money = tradingmeasure.computeWithFunOn(groupsClose[v[0]+4][2], groupsClose[targetNext][2], tradePolicy)
+        money = tradingmeasure.computeWithFunOn(groupsClose[v[0]+util.ma][2], groupsClose[targetNext][2], tradePolicy)
         totalMoney += money
         #ranks.append(rank)
-        lpScore += similarity.computeWith(groupsClose[v[0]+4], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
+        lpScore += similarity.computeWith(groupsClose[v[0]+util.ma], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
-    predicted = testalgos.averageGroups(groupsClose, results[0:nResults], 4)
+    predicted = testalgos.averageGroups(groupsClose, results[0:nResults], util.ma)
     money = tradingmeasure.computeWithFunOn(predicted, groupsClose[targetNext][2], tradePolicy)
     #totalRank *= 100        # normalize totalRank for equal weightage.
     #totalRank /= len(results2) # normalize totalRank for equal weightage.

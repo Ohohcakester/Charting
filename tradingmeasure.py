@@ -52,6 +52,7 @@ def tenPercentSell(data):
             sellPoint = i+1
     return (0,sellPoint)
 
+# used as a control. does not use the data at all.
 def dontSell(data):
     return (0,len(data)-1)
 
@@ -62,6 +63,32 @@ def sellOrKeep(data):
         return (0,0)
     else:
         return (0,last)
+
+# only keep when the graph rises by a significant amount.
+def riskAverseSellOrKeep(data):
+    last = len(data)-1
+    if data[last] >= 1.2*data[0]:
+        return (0,last)
+    else:
+        return (0,0)
+
+# tries to lose as much money as possible
+def reversedSellOrKeep(data):
+    last = len(data)-1
+    if data[last] < data[0]:
+        return (0,last)
+    else:
+        return (0,0)
+
+
+# tries to lose as much money as possible
+# only sells when the graph falls by a significant amount.
+def reversedRiskAverseSellOrKeep(data):
+    last = len(data)-1
+    if data[last] < 0.8*data[0]:
+        return (0,last)
+    else:
+        return (0,0)
 
 
 def largestReturn(data):
