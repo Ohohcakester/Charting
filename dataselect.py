@@ -111,8 +111,6 @@ def increasingAveragesFilter(dataList):
 
 
 
-
-
 """ REGION: INTERVAL FILTERS - END """
 
 """ REGION: UTILITY - START """

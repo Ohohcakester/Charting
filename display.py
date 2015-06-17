@@ -63,29 +63,24 @@ def printgroupattrs(group, dates):
         str(dates[start]) + ' to ' + str(dates[end]))
 
 
-
-
 def plotAverageHighLow(groups, results, compareTo):
     import statistics
     lists = list(map(lambda v : groups[v[0]+util.ma][2][:], results))
     for i in range(0,len(lists)):
-        first = lists[i][0]
-        for j in range(0,len(lists[i])):
-            lists[i][j] /= first
+        lists[i] = similarity.byFirst(lists[i])
 
-    datapoints = []
-    for i in range(0,len(lists[0])):
-        datapoints.append([])
-    for i in range(0,len(lists)):
-        for j in range(0,len(lists[i])):
-            datapoints[j].append(lists[i][j])
+    datapoints = util.transposeLists(lists)
+
     meanGraph = list(map(statistics.mean, datapoints))
     stdGraph = list(map(statistics.stdev, datapoints))
-    upper = []
-    lower = []
-    for i in range(0,len(meanGraph)):
-        upper.append(meanGraph[i]+stdGraph[i])
-        lower.append(meanGraph[i]-stdGraph[i])
+
+    first = meanGraph[0]
+    scale = lambda v : v / first
+    meanGraph = list(map(scale, meanGraph))
+    stdGraph = list(map(scale, stdGraph))
+
+    upper = list([a+b for a,b in zip(meanGraph, stdGraph)])
+    lower = list([a-b for a,b in zip(meanGraph, stdGraph)])
 
     compareTo = similarity.byFirst(compareTo)
     plt.plot(compareTo)

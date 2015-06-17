@@ -17,7 +17,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 2
+    choice = 0
 
     options = {
         0:runTests,
@@ -95,9 +95,9 @@ def viewGraph():
 
 
 def runVisualise():
-    fileName = 'data/MENTOR_GRAPHICS_CORP.csv'
+    fileName = 'data/AMERICAN_MANAGEMENT_SYSTEMS_INC.csv'
     #fileName = 'table.csv'
-    targetGroup = 142
+    targetGroup = 89
 
     global data, headers
     data, headers = para.readFile(fileName)
@@ -157,7 +157,6 @@ def listDataFiles():
 
     files = map(addDir, filter(extension, os.listdir('data')))
     return files
-
 
 
 

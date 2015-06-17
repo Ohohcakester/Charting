@@ -5,6 +5,9 @@ import tradingmeasure
 import parameters as para
 import util
 
+#testOutputFilename = 'testresults.txt'
+testOutputFilename = 'results_riskAverseSellOrKeep_dth_nocond_byFirst.txt'
+
 def addsimilarity(results, groups, i, j):
     sim = similarity.compute(groups[i], groups[j])
     results.append((i,j,sim))
@@ -86,7 +89,7 @@ algosToTest = {
     'tquest': similarity.tsdist('tquestDistance', tau=0.5), #seems to do nothing...?
     'wav': similarity.tsdist('wavDistance'),
 }
-algosToTest = {
+algosToTest0 = {
     'sts': similarity.tsdist('stsDistance'),
     'inf.norm': similarity.tsdist('inf.normDistance'),
     'cort': similarity.tsdist('cortDistance'),
@@ -98,6 +101,10 @@ algosToTest = {
     'euclidean': similarity.tsdist('euclideanDistance'),
     'fourier': similarity.tsdist('fourierDistance'),
     'dissim': similarity.tsdist('dissimDistance'),
+}
+
+algosToTest0 = {
+    'inf.norm': similarity.tsdist('inf.normDistance'),
 }
 
 def formatResult(key, result):
@@ -122,7 +129,7 @@ def compareAlgorithms(fileName):
         printResult(key, result)
 
 def compareAlgorithmsWithData(testCases):
-    global algosToTest, data, headers
+    global algosToTest, data, headers, testOutputFilename
     allResults = {}
     for key in algosToTest.keys():
         allResults[key] = []
@@ -140,7 +147,7 @@ def compareAlgorithmsWithData(testCases):
                     #printResult(key, result)
 
     averageResults = {}
-    f = open('testresults_cnt.txt', 'w+')
+    f = open(testOutputFilename, 'w+')
     for key in allResults.keys():
         averageResult = computeAverageResult(allResults[key])
         s = formatResult(key, averageResult)
@@ -164,28 +171,9 @@ def computeAverageResult(results):
     return (totalLp, totalRank, totalMoney)
 
 
-def averageGroups(groups, results, offset):
-    dataLists = []
-    for v in results:
-        dataLists.append(groups[v[0]+offset][2])
-    return averageData(dataLists)
+def getDataLists(groups, results, offset):
+    return list(map(lambda v : groups[v[0]+offset][2], results))
 
-
-def averageData(dataLists):
-    for i in range(0,len(dataLists)):
-        dataLists[i] = similarity.byMean(dataLists[i])
-
-    dataList = []
-    size = len(dataLists[0])
-    nSamples = len(dataLists)
-
-    for i in range(0,size):
-        total = 0
-        for j in range(0,nSamples):
-            total += dataLists[j][i]
-        dataList.append(total/nSamples)
-        
-    return dataList
 
 
 def testAlgo(algo, target):
@@ -209,25 +197,23 @@ def testAlgo(algo, target):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    #tradePolicy = tradingmeasure.sellOrKeep
-    tradePolicy = tradingmeasure.dontSell
+    #tradePolicy = tradingmeasure.reversedSellOrKeep
+    tradePolicy = tradingmeasure.riskAverseSellOrKeep
+    tradingPreprocess = tradingmeasure.averageData
+    #tradingPreprocess = None
     #tradePolicy = tradingmeasure.largestReturn
 
     totalRank = 0
     lpScore = 0
-    totalMoney = 0
     nResults = 10
     for v in results[0:nResults]:
         rank = getRank(results2, v[0]+util.ma)
         totalRank += rank
-        money = tradingmeasure.computeWithFunOn(groups[v[0]+util.ma][2], groups[targetNext][2], tradePolicy)
-        totalMoney += money
-        #ranks.append(rank)
         lpScore += similarity.computeWith(groups[v[0]+util.ma], groups[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
-    predicted = averageGroups(groups, results[0:nResults], util.ma)
-    money = tradingmeasure.computeWithFunOn(predicted, groups[targetNext][2], tradePolicy)
-    print(money)
+    dataLists = getDataLists(groups, results[0:nResults], util.ma)
+    money = tradingmeasure.computeWithFunOn(dataLists, groups[targetNext][2], tradePolicy, tradingPreprocess)
+    #print(money)
     #totalRank *= 100        # normalize totalRank for equal weightage.
     #totalRank /= len(results2) # normalize totalRank for equal weightage.
 

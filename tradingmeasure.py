@@ -1,11 +1,15 @@
 import similarity
+import util
 
 def computeWithFun(data, policyFun):
     buySellPoints = policyFun(data)
     return computeWithPoints(data, buySellPoints)
 
 
-def computeWithFunOn(sourceData, targetData, policyFun):
+def computeWithFunOn(sourceData, targetData, policyFun, preprocessFun = None):
+    if preprocessFun != None:
+        sourceData = preprocessFun(sourceData)
+
     buySellPoints = policyFun(sourceData)
     return computeWithPoints(targetData, buySellPoints)
 
@@ -35,8 +39,51 @@ def computeWithPoints(data, buySellPoints):
     return money
 
 
+""" REGION: UTILITY - START """
 
-""" REGION: TRADING POLICIES - START """
+# Note: higher value is lower confidence
+# Values are usually between 0 and 1. However it is occasionally more than 1.
+def computeConfidence(meanList, sdList):
+    return util.mean([sd/val for val,sd in zip(meanList,sdList)])
+    
+
+def computeMeanAndSD(dataLists):
+    import statistics
+    dataLists = list(map(similarity.byFirst, dataLists))
+    datapoints = util.transposeLists(dataLists)
+
+    meanList = list(map(statistics.mean, datapoints))
+    sdList = list(map(statistics.stdev, datapoints))
+    return meanList, sdList
+
+def averageData(dataLists):
+    import statistics
+    dataLists = list(map(similarity.byFirst, dataLists))
+    datapoints = util.transposeLists(dataLists)
+
+    return list(map(statistics.mean, datapoints))
+
+""" REGION: UTILITY - END """
+
+
+""" REGION: TRADING POLICIES : GENERAL - START """
+# these algorithms are run with a None preprocessing function.
+
+# bails and does nothing when it is not confident in its answer.
+def confidenceFilter(threshold, policy):
+    def fun(data):
+        meanList, sdList = computeMeanAndSD(data)
+        confidence = computeConfidence(meanList, sdList)
+        if confidence > threshold: return (0,0)
+        else: return policy(meanList)
+    return fun
+    
+
+""" REGION: TRADING POLICIES : GENERAL - END """
+
+
+""" REGION: TRADING POLICIES : USING AVERAGEDATA ONLY - START """
+# These algorithms must be preprocessed with averageData.
 
 def maxValueSell(data):
     sellPoint = max(enumerate(data), key=lambda t:t[1])[0]
@@ -67,7 +114,7 @@ def sellOrKeep(data):
 # only keep when the graph rises by a significant amount.
 def riskAverseSellOrKeep(data):
     last = len(data)-1
-    if data[last] >= 1.2*data[0]:
+    if data[last] >= 1.1*data[0]:
         return (0,last)
     else:
         return (0,0)
@@ -85,7 +132,7 @@ def reversedSellOrKeep(data):
 # only sells when the graph falls by a significant amount.
 def reversedRiskAverseSellOrKeep(data):
     last = len(data)-1
-    if data[last] < 0.8*data[0]:
+    if data[last] < 0.9*data[0]:
         return (0,last)
     else:
         return (0,0)
@@ -111,7 +158,7 @@ def largestReturn(data):
     return(buyPoint, sellPoint)
 
 
-""" REGION: TRADING POLICIES - END """
+""" REGION: TRADING POLICIES : USING AVERAGEDATA ONLY - END """
 
 
 
