@@ -1,11 +1,18 @@
 from datetime import date
+import util
 
 data = {}
 headers = []
+cachedFiles = {}
+caching = True
 
 # read file and save into analyse's global variables.
 def readFile(fileName):
-    global data, headers
+    global data, headers, cachedFiles, caching
+    if caching == True:
+        if fileName in cachedFiles:
+            return cachedFiles[fileName]
+
     data = {}
 
     f = open(fileName)
@@ -13,37 +20,33 @@ def readFile(fileName):
     headers = parseHeaders(s)
     n = len(headers)
     
-    cols = []
-    for i in range(0,n):
-        cols.append([])
-    
-    for s in f:
-        row = parseRow(s.rstrip())
-        for i in range(0,n):
-            cols[i].append(row[i])
+    cols = util.transposeLists(map(parseRow, f))
+    f.close()
             
     for i in range(0,n):
         data[headers[i]] = cols[i]
-    f.close()
         
     #reverseAll()
     convertformat('Date', mapdateSlash)
     #convertformat('Date', mapdate)
     createformat('Day', 'Date', mapDateToDay)
-    convertformat('Open', float)
-    convertformat('High', float)
-    convertformat('Low', float)
+    #convertformat('Open', float)
+    #convertformat('High', float)
+    #convertformat('Low', float)
     convertformat('Close', float)
-    convertformat('Volume', int)
+    #convertformat('Volume', int)
     #convertformat('Adj Close', float)
-    
-    #applyVarParameter('DiffClose', 'Close', runningAverageDifference(20,40))
-    #applyVarParameter('AvgClose', 'Close', averageLast(10))
-    #applyVarParameter('Running', 'Close', runningAverageDifference(1,20))
-    #applyVarParameter('DiffCloseSign', 'Close', toSign(runningAverageDifference(20, 40)))
 
-    #applyVarParameter('RatioClose', 'Close', runningAverageDifference(20,40))
-    #applyVarParameter('RunningRatio', 'Close', runningAverageDifference(1,20))
+    #applyVarParameter('DiffClose', 'Close', runningAverageDifference(20,40))
+    applyVarParameter('AvgClose', 'Close', averageLast(10))
+    #applyVarParameter('Running', 'Close', runningAverageDifference(1,20))
+    applyVarParameter('DiffCloseSign', 'Close', toSign(runningAverageDifference(20, 40)))
+
+    applyVarParameter('RatioClose', 'Close', runningAverageDifference(20,40))
+    applyVarParameter('RunningRatio', 'Close', runningAverageDifference(1,20))
+
+    if caching == True:
+        cachedFiles[fileName] = data, headers
 
     return data, headers
 
@@ -57,7 +60,7 @@ def parseHeaders(s):
     return s.split(',')
     
 def parseRow(s):
-    return s.split(',')
+    return s.rstrip().split(',')
 
 def printrange(a, b):
     global data, headers

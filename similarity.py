@@ -6,6 +6,8 @@ import rbind
 """ REGION: MAIN FUNCTIONS - START """
 
 def computeConditionScore(group1, group2):
+    if len(group1[4]) == 0: return 0
+
     LARGE_CONSTANT = 10000
     def match(x,y):
         if x == y: return 1
@@ -15,7 +17,7 @@ def computeConditionScore(group1, group2):
 # Computes the similarity score between two groups.
 def compute(group1, group2):
     global measureFun
-    data1, data2 = group1[2], group2[2]
+    data1, data2 = group1[2], group2[2] 
     data1, data2 = normalize(data1), normalize(data2)
 
     return measureFun(data1, data2) + computeConditionScore(group1, group2)

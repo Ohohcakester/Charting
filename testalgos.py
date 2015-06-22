@@ -6,11 +6,11 @@ import parameters as para
 import util
 
 #testOutputFilename = 'testresults.txt'
-testOutputFilename = 'results_riskAverseSellOrKeep_dth_nocond_byFirst.txt'
+testOutputFilename = 'results_confidenceSellOrKeep_fyh_nocond_byFirst.txt'
 
-def addsimilarity(results, groups, i, j):
+def getSimilarity(groups, i, j):
     sim = similarity.compute(groups[i], groups[j])
-    results.append((i,j,sim))
+    return (i,j,sim)
     
 
 def compareAllGroupsTo(groups, targetIndex):
@@ -19,15 +19,11 @@ def compareAllGroupsTo(groups, targetIndex):
     print(dates[groups[targetIndex][1]])
     for i in range(0,len(groups)):
         if i != targetIndex:
-            addsimilarity(results,groups,i,targetIndex)
+            results.append(getSimilarity(groups,i,targetIndex))
     return results
 
 def compareAllGroupsBefore(groups, targetIndex):
-    results = []
-    for i in range(0,targetIndex):
-        if i != targetIndex:
-            addsimilarity(results,groups,i,targetIndex)
-    return results
+    return list(map(lambda i : getSimilarity(groups, i, targetIndex), range(0,targetIndex)))
 
 # assume results is sorted.
 def getRank(results, index):
@@ -198,9 +194,10 @@ def testAlgo(algo, target):
     results2.sort(key=lambda x : x[2])
 
     #tradePolicy = tradingmeasure.reversedSellOrKeep
-    tradePolicy = tradingmeasure.riskAverseSellOrKeep
-    tradingPreprocess = tradingmeasure.averageData
-    #tradingPreprocess = None
+    #tradePolicy = tradingmeasure.riskAverseSellOrKeep
+    tradePolicy = tradingmeasure.confidenceFilter(0.2, tradingmeasure.sellOrKeep)
+    #tradingPreprocess = tradingmeasure.averageData
+    tradingPreprocess = None
     #tradePolicy = tradingmeasure.largestReturn
 
     totalRank = 0

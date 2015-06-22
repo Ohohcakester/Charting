@@ -17,7 +17,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 0
+    choice = 3
 
     options = {
         0:runTests,

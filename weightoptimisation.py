@@ -7,8 +7,9 @@ import grouping
 import tradingmeasure
 import pyswarm
 import dataselect
+import util
 
-keys = ['Close', 'DiffClose', 'AvgClose', 'DiffCloseSign', 'Running']
+keys = ['Close', 'RatioClose', 'AvgClose', 'DiffCloseSign', 'RunningRatio']
 
 algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
@@ -34,7 +35,7 @@ headers = []
 def optimise():
     testCases = testcollection.readTests()
     #grouping.redefineGroupingConditions(dataselect.conditionBreakHigh)
-    grouping.redefineGroupingConditions(dataselect.conditionDoubleTopsFiltered)
+    #grouping.redefineGroupingConditions(dataselect.conditionDoubleTopsFiltered)
 
     def testWithWeights(weights):
         global keys
@@ -44,8 +45,21 @@ def optimise():
             weightDict[keys[i]] = weights[i]
         result = testAlgorithmsForAverageScore(testCases, weightDict)
         print(str(result) + ' <- ' + str(weights))
-        return result
-    
+        return (result - 1)*100
+   
+    """ 
+    import time
+    print ('start:')
+    s = time.time()
+    testWithWeights([1,1,1,1,0])
+    testWithWeights([1,1,1,0,0.5])
+    testWithWeights([1,1,0,0,0.5])
+    testWithWeights([1,0,1,0,0.5])
+    testWithWeights([1,0,1,1,0.5])
+    e = time.time()
+    print('end')
+    print(e - s)
+    return"""
     ub = [1]*5
     lb = [0]*5
     xopt, fopt = pyswarm.pso(testWithWeights, lb, ub, maxiter=20)
@@ -110,7 +124,7 @@ def testAlgoWeighted(algo, target, weightDataFun):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    tradePolicy = tradingmeasure.dontSell
+    tradePolicy = tradingmeasure.sellOrKeep
     tradingPreprocess = tradingmeasure.averageData
 
     totalRank = 0
@@ -122,8 +136,8 @@ def testAlgoWeighted(algo, target, weightDataFun):
         totalRank += rank
         lpScore += similarity.computeWith(groupsClose[v[0]+util.ma], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
-    dataLists = testalgos.getDataLists(groups, results[0:nResults], util.ma)
-    money = tradingmeasure.computeWithFunOn(dataLists, groups[targetNext][2], tradePolicy, tradingPreprocess)
+    dataLists = testalgos.getDataLists(groupsClose, results[0:nResults], util.ma)
+    money = tradingmeasure.computeWithFunOn(dataLists, groupsClose[targetNext][2], tradePolicy, tradingPreprocess)
     #totalRank *= 100        # normalize totalRank for equal weightage.
     #totalRank /= len(results2) # normalize totalRank for equal weightage.
 
