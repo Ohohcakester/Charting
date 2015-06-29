@@ -17,7 +17,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 3
+    choice = 0
 
     options = {
         0:runTests,
@@ -35,6 +35,7 @@ def runTests():
     #grouping.redefineGroupingConditions(dataselect.conditionBreakHigh, dataselect.conditionDoubleTops, dataselect.conditionDoubleTopsFiltered)
     #grouping.redefineGroupingConditions(dataselect.conditionBreakHigh)
     #grouping.redefineGroupingConditions(dataselect.conditionDoubleTopsFiltered)
+    #grouping.changeToShiftedMonthsGroups()
 
     testCases = testcollection.readTests()
     testalgos.compareAlgorithmsWithData(testCases)

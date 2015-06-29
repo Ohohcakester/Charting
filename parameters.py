@@ -4,7 +4,7 @@ import util
 data = {}
 headers = []
 cachedFiles = {}
-caching = True
+caching = False
 
 # read file and save into analyse's global variables.
 def readFile(fileName):
@@ -22,28 +22,29 @@ def readFile(fileName):
     
     cols = util.transposeLists(map(parseRow, f))
     f.close()
-            
+
     for i in range(0,n):
-        data[headers[i]] = cols[i]
+        if len(cols) == 0: data[headers[i]] = []
+        else: data[headers[i]] = cols[i]
         
     #reverseAll()
     convertformat('Date', mapdateSlash)
     #convertformat('Date', mapdate)
     createformat('Day', 'Date', mapDateToDay)
-    #convertformat('Open', float)
-    #convertformat('High', float)
-    #convertformat('Low', float)
+    convertformat('Open', float)
+    convertformat('High', float)
+    convertformat('Low', float)
     convertformat('Close', float)
     #convertformat('Volume', int)
     #convertformat('Adj Close', float)
 
     #applyVarParameter('DiffClose', 'Close', runningAverageDifference(20,40))
-    applyVarParameter('AvgClose', 'Close', averageLast(10))
+    #applyVarParameter('AvgClose', 'Close', averageLast(10))
     #applyVarParameter('Running', 'Close', runningAverageDifference(1,20))
-    applyVarParameter('DiffCloseSign', 'Close', toSign(runningAverageDifference(20, 40)))
+    #applyVarParameter('DiffCloseSign', 'Close', toSign(runningAverageDifference(20, 40)))
 
-    applyVarParameter('RatioClose', 'Close', runningAverageDifference(20,40))
-    applyVarParameter('RunningRatio', 'Close', runningAverageDifference(1,20))
+    #applyVarParameter('RatioClose', 'Close', runningAverageDifference(20,40))
+    #applyVarParameter('RunningRatio', 'Close', runningAverageDifference(1,20))
 
     if caching == True:
         cachedFiles[fileName] = data, headers

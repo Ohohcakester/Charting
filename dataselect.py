@@ -3,18 +3,20 @@ import parameters as para
 # (startindex, endindex, data, index) #bitmap deprecated
 
 def findMatches(data, groups):
-    chooseType = 0
     chooseFun = 2
-
-    criteriaType = [
-        byPoints,
-        byIndividual,
-        ][chooseType]
 
     criteriaFun = [
         breakHigh(yearsToDays(1), yearsToDays(5)),
         compose(getEndPoints, findDoubleTops),
         compose(getEndPoints, findDoubleTopsFiltered),
+        randomMatch(0.003),
+        ][chooseFun]
+
+    criteriaType = [
+        byPoints,
+        byPoints,
+        byPoints,
+        byIndividual,
         ][chooseFun]
 
     # corresponds to the criteriaFuns.
@@ -23,6 +25,7 @@ def findMatches(data, groups):
         True,
         False,
         False,
+        True,
         ][chooseFun]
 
     if singleTS: data = data['Close']
@@ -30,14 +33,14 @@ def findMatches(data, groups):
     return criteriaType(data, groups, criteriaFun)
 
 
-def findMatchesWith(data, groups, criteriaType, criteriaFun): #TODO: there's a bug. it returns nothing!! 
+def findMatchesWith(data, groups, criteriaType, criteriaFun):
     return criteriaType(data, groups, criteriaFun)
 
 
 def byIndividual(fulldata, groups, criteria):
     def fun(group):
         return criteria(fulldata, group[0], group[1])
-    return filter(fun, groups)
+    return list(filter(fun, groups))
 
 
 # Assumes groups are sorted in chronological order (increasing)
@@ -53,6 +56,11 @@ def byPoints(fulldata, groups, criteria):
 
 """ REGION: INDIVIDUAL CRITERION - START """
 
+def randomMatch(frac):
+    import random
+    def criteria(fulldata, startIndex, endIndex):
+        return random.random() < frac
+    return criteria
 
 
 def containsPoints(markedPoints):
@@ -63,12 +71,19 @@ def containsPoints(markedPoints):
         return False
     return fun
 
-""" REGION: INDIVIDUAL CRITERION - START """
+""" REGION: INDIVIDUAL CRITERION - END """
 
 
 
 
 """ REGION: POINTS CRITERION - START """
+
+def randomPoints(frac):
+    import random
+    def criteria(fulldata):
+        return list(filter(lambda v : random.random() < frac, range(0,len(fulldata))))
+    return criteria
+
 
 def breakHigh(minDays, maxDays):
     def criteria(fulldata):

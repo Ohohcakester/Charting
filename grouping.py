@@ -60,12 +60,12 @@ def nextndays(index, days, ndays):
 
 # each group is a tuple (startindex, endindex, data, index, conditionData)
 # minDay is the day to start searching from.
-def groupUp(data, datalist, minDay = 0):
-    groups = splitIntoGroups(data, datalist, minDay)
+def groupUp(data, dataList, minDay = 0):
+    groups = splitIntoGroups(data, dataList, minDay)
     return list(map(lambda group : group + ((),), groups))
 
 
-def splitIntoGroups(data, datalist, minDay = 0):
+def splitIntoGroups(data, dataList, minDay = 0):
     curr = 0
     lastmonth = -1
     groups = []
@@ -81,17 +81,95 @@ def splitIntoGroups(data, datalist, minDay = 0):
             #start, end, bitmap = nextfewweeks(i, firstmonday, days, dates, 13)
             start, end = nextndays(i, days, 75)
             if start != None:
-                #group = (start, end, datalist[start:end], bitmap)
-                group = (start, end, datalist[start:end], len(groups))
+                #group = (start, end, dataList[start:end], bitmap)
+                group = (start, end, dataList[start:end], len(groups))
                 groups.append(group)
     return groups
+
+def splitIntoGroupsFree(data, dataList, minDay = 0):
+    groups = []
+    curr = minDay
+    interval = 21
+    groupSize = 75
+    dataLength = len(dataList)
+
+    while True:
+        start = curr
+        end = curr+groupSize
+        if end >= dataLength: break
+        group = (start, end, dataList[start:end], len(groups))
+        groups.append(group)
+        curr += interval
+    return groups
+
+
+def splitIntoGroupsShifted(data, dataList, minDay = 0):
+    curr = 0
+    lastmonth = -1
+    groups = []
+    days = data['Day']
+    dates = data['Date']
+
+    for i in range(minDay,len(days)):
+        if dates[i].month != lastmonth and dates[i].day >=23:
+            lastmonth = dates[i].month
+
+            start, end = nextndays(i, days, 75)
+            if start != None:
+                #group = (start, end, dataList[start:end], bitmap)
+                group = (start, end, dataList[start:end], len(groups))
+                groups.append(group)
+    return groups
+
+
+def splitIntoGroupsVariableMonths(data, dataList, minDay = 0):
+    curr = 0
+    lastmonth = -1
+    groups = []
+    days = data['Day']
+    dates = data['Date']
+    firstDay = -1
+
+    for i in range(minDay,len(days)):
+        if dates[i].month != lastmonth:
+            if firstDay != -1:
+                if dates[i].day >= firstDay+7 or dates[i].day < firstDay: continue
+            else:
+                firstDay = dates[i].day
+
+            lastmonth = dates[i].month
+
+            start, end = nextndays(i, days, 75)
+            if start != None:
+                #group = (start, end, dataList[start:end], bitmap)
+                group = (start, end, dataList[start:end], len(groups))
+                groups.append(group)
+    return groups
+
+
+def splitIntoGroupsFreeMonths(data, dataList, minDay = 0):
+    curr = 0
+    lastmonth = -1
+    groups = []
+    days = data['Day']
+    dates = data['Date']
+
+    for i in range(minDay,len(days)):
+        if dates[i].month != lastmonth:
+            lastmonth = dates[i].month
+            start, end = nextndays(i, days, 75)
+            if start != None:
+                group = (start, end, dataList[start:end], len(groups))
+                groups.append(group)
+    return groups
+
 
 
 # Each condition must be in a tuple (criteriaType, criteriaFun)
 # each group is a tuple (startindex, endindex, data, index, conditionData)
 def groupWithConditionData(*conditions):
-    def fun(data, datalist, minDay = 0):
-        groups = splitIntoGroups(data, datalist, minDay)
+    def fun(data, dataList, minDay = 0):
+        groups = splitIntoGroups(data, dataList, minDay)
         conditionData = []
         for i in range(0,len(groups)): conditionData.append([])
 
@@ -111,3 +189,28 @@ def groupWithConditionData(*conditions):
 def redefineGroupingConditions(*conditions):
     global groupUp
     groupUp = groupWithConditionData(*conditions)
+
+def changeToFreeGroups():
+    global groupUp
+    def groupUp(data, dataList, minDay = 0):
+        groups = splitIntoGroupsFree(data, dataList, minDay)
+        return list(map(lambda group : group + ((),), groups))
+
+def changeToShiftedMonthsGroups():
+    global groupUp
+    def groupUp(data, dataList, minDay = 0):
+        groups = splitIntoGroupsShifted(data, dataList, minDay)
+        return list(map(lambda group : group + ((),), groups))
+
+
+def changeToFreeMonthsGroups():
+    global groupUp
+    def groupUp(data, dataList, minDay = 0):
+        groups = splitIntoGroupsFreeMonths(data, dataList, minDay)
+        return list(map(lambda group : group + ((),), groups))
+
+def changeToVariableMonthsGroups():
+    global groupUp
+    def groupUp(data, dataList, minDay = 0):
+        groups = splitIntoGroupsVariableMonths(data, dataList, minDay)
+        return list(map(lambda group : group + ((),), groups))

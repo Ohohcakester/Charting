@@ -6,7 +6,8 @@ import parameters as para
 import util
 
 #testOutputFilename = 'testresults.txt'
-testOutputFilename = 'results_confidenceSellOrKeep_fyh_nocond_byFirst.txt'
+testOutputFilename = 'testresults_test.txt'
+#testOutputFilename = 'results_confidenceSellOrKeep_fyh_nocond_byFirst.txt'
 
 def getSimilarity(groups, i, j):
     sim = similarity.compute(groups[i], groups[j])
@@ -99,8 +100,14 @@ algosToTest0 = {
     'dissim': similarity.tsdist('dissimDistance'),
 }
 
-algosToTest0 = {
-    'inf.norm': similarity.tsdist('inf.normDistance'),
+algosToTest = {
+    'sts': similarity.tsdist('stsDistance'),
+    'mindist.sax_1': similarity.tsdist('mindist.saxDistance',1),
+    'dtw': similarity.tsdist('dtwDistance'),
+}
+algosToTest = {
+    'sts': similarity.tsdist('stsDistance'),
+    #'manhattan': similarity.tsdist('manhattanDistance'),
 }
 
 def formatResult(key, result):
@@ -152,19 +159,13 @@ def compareAlgorithmsWithData(testCases):
 
 
 def computeAverageResult(results):
-    totalLp = 0
-    totalRank = 0
-    totalMoney = 0
-    nResults = len(results)
-
-    for result in results:
-        totalLp += result[0]
-        totalRank += result[1]
-        totalMoney += result[2]
-    totalLp /= nResults
-    totalRank /= nResults
-    totalMoney /= nResults
-    return (totalLp, totalRank, totalMoney)
+    import statistics
+    results = util.transposeLists(results)
+    print('Number of results: ' + str(len(results[0])))
+    return (statistics.mean(results[0]),
+            statistics.mean(results[1]),
+            statistics.mean(results[2]),
+            statistics.stdev(results[2]))
 
 
 def getDataLists(groups, results, offset):
@@ -193,12 +194,14 @@ def testAlgo(algo, target):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
-    #tradePolicy = tradingmeasure.reversedSellOrKeep
+    #tradePolicy = tradingmeasure.dontSell
+    #tradePolicy = tradingmeasure.sellOrKeep
     #tradePolicy = tradingmeasure.riskAverseSellOrKeep
     tradePolicy = tradingmeasure.confidenceFilter(0.2, tradingmeasure.sellOrKeep)
+    #tradePolicy = tradingmeasure.largestReturn
+    
     #tradingPreprocess = tradingmeasure.averageData
     tradingPreprocess = None
-    #tradePolicy = tradingmeasure.largestReturn
 
     totalRank = 0
     lpScore = 0
@@ -211,7 +214,7 @@ def testAlgo(algo, target):
     dataLists = getDataLists(groups, results[0:nResults], util.ma)
     money = tradingmeasure.computeWithFunOn(dataLists, groups[targetNext][2], tradePolicy, tradingPreprocess)
     #print(money)
-    #totalRank *= 100        # normalize totalRank for equal weightage.
-    #totalRank /= len(results2) # normalize totalRank for equal weightage.
+    totalRank *= 100        # normalize totalRank for equal weightage.
+    totalRank /= len(results2) # normalize totalRank for equal weightage.
 
     return (lpScore/nResults, totalRank/nResults, money)
