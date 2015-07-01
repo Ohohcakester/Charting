@@ -44,7 +44,7 @@ def runTests():
 
 """ REGION: DATA SELECT - START """
 def runDataSelect():
-    dataFiles = listDataFiles()
+    dataFiles = util.listDataFiles()
     #dataFiles = util.getRandomSublist(dataFiles, 20)
 
     for f in dataFiles:
@@ -63,7 +63,7 @@ def runDataSelectOn(fileName):
     matches = dataselect.findMatches(data, groups)
     #print('Found ' + str(len(matches)) + 'matches')
     if (len(matches) <= 0): return #print only when there is at least one match.
-    print(display.getNameOnly(fileName))
+    print(util.getNameOnly(fileName))
     for group in matches:
         display.printgroupattrs(group, dates)
 
@@ -71,12 +71,12 @@ def runDataSelectOn(fileName):
 
 
 def findDoubleTops():
-    dataFiles = listDataFiles()
+    dataFiles = util.listDataFiles()
     for f in dataFiles:
         data, headers = para.readFile(f)
         intervals = dataselect.findDoubleTops(data)
         if (len(intervals) > 0):
-            print(display.getNameOnly(f))
+            print(util.getNameOnly(f))
             print(intervals)
 
 def viewGraph():
@@ -147,18 +147,6 @@ def runVisualise():
         display.plotnormalizedWith(data, groups[v[0]+util.ma], [similarity.byFirst])
         plt.show()
             
-
-def listDataFiles():
-    import os
-
-    def extension(s):
-        return s[-4:] == '.csv'
-    def addDir(s):
-        return 'data/' + s
-
-    files = map(addDir, filter(extension, os.listdir('data')))
-    return files
-
 
 
 if __name__ == '__main__':

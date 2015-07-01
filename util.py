@@ -16,3 +16,26 @@ def transposeLists(lists):
 
 def mean(dataList):
     return sum(dataList) / len(dataList)
+
+
+def getNameOnly(s):
+    firstSlash = s.find('/')
+    if firstSlash != -1:
+        s = s[firstSlash+1:]
+    lastDot = s.rfind('.')
+    if lastDot != -1:
+        s = s[:lastDot]
+    return s
+
+
+
+def listDataFiles():
+    import os
+
+    def extension(s):
+        return s[-4:] == '.csv'
+    def addDir(s):
+        return 'data/' + s
+
+    files = map(addDir, filter(extension, os.listdir('data')))
+    return files

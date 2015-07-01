@@ -2,19 +2,20 @@ import parameters as para
 import similarity
 import dataselect
 import tradingmeasure
+import util
+import verificationconfig
+import chartprinter
 
-groupSize = 75
+config = verificationconfig.configure()
 
-similarityMeasure = similarity.tsdist('stsDistance')
+groupSize = config.groupSize
+similarityMeasure = config.similarityMeasure
+tradePolicy = config.tradePolicy
+tradingPreprocess = config.tradingPreprocess
+resultsFile = config.resultsFile
 
-#tradePolicy = tradingmeasure.dontSell
-#tradePolicy = tradingmeasure.sellOrKeep
-#tradePolicy = tradingmeasure.riskAverseSellOrKeep
-tradePolicy = tradingmeasure.confidenceFilter(0.2, tradingmeasure.sellOrKeep)
-#tradePolicy = tradingmeasure.largestReturn
+outputCharts = True
 
-#tradingPreprocess = tradingmeasure.averageData
-tradingPreprocess = None
 
 """ TEST FRAMEWORK - START """
 
@@ -29,9 +30,16 @@ def getFutureFun(todayIndex, answerLength):
     return fun
 
 def verify(fileName, todayIndex):
-    global groupSize
+    global groupSize, config
+    if outputCharts == True:
+        chart = chartprinter.new(fileName, todayIndex, config.algo, groupSize) 
+    else:
+        chart = None
 
     data, headers = para.readFile(fileName)
+
+    if todayIndex - groupSize < 0: return None
+    if todayIndex + groupSize > len(data['Close']): return None
 
     getKnownData = getKnownFun(todayIndex)
     getFutureData = getFutureFun(todayIndex, groupSize)
@@ -42,9 +50,11 @@ def verify(fileName, todayIndex):
         knownData[key] = getKnownData(data[key])
         futureData[key] = getFutureData(data[key])
 
-    strategy = decideStrategy(knownData, groupSize)
+    strategy = decideStrategy(knownData, groupSize, chart)
+    if strategy == None: return (1, False) #dontTrade
+
     result = applyStrategy(strategy, futureData)
-    return result
+    return (result, True)
 
 """ TEST FRAMEWORK - END """
 
@@ -144,9 +154,9 @@ def createStrategyFromPolicy(sourceData):
     return strategy
 
 def dontTrade():
-    def strategy(i, futureData):
-        return 0
-    return strategy
+    #def strategy(i, futureData):
+    #    return 0
+    return None
 
 def groupToStr(group):
     return str(group[0]) + '-' + str(group[1])
@@ -158,22 +168,22 @@ def printGroups(groups):
     print('[' + ', '.join(map(groupToStr, groups)) + ']')
 
 
-def decideStrategy(knownData, groupSize):
+def decideStrategy(knownData, groupSize, chart = None):
     global tradePolicy, tradingPreprocess, similarityMeasure
 
     dates = knownData['Date']
     fullData = knownData['Close']
     groups = groupByLast(knownData, fullData)
 
+    if (len(groups) < 20): return dontTrade()
+
     target = len(groups) - 1
-    printGroups(groups)
+    #printGroups(groups)
     # TODO: What are the group indexes for? Reversing them seems to throw it all over the place...
-    # TODO: group1[4] index out of range...?
-    # wow, crap I lost a lot of money. 0.89??
 
     matches = dataselect.findMatches(knownData, groups)
-    printGroups(matches)
-    printGroup(groups[target])
+    #printGroups(matches)
+    #printGroup(groups[target])
     if groups[target] not in matches:
         return dontTrade()
 
@@ -189,8 +199,11 @@ def decideStrategy(knownData, groupSize):
     dataLists = getDataLists(fullData, groups, results[0:nResults], groupSize)
     strategy = createStrategyFromPolicy(dataLists)
 
-    return strategy
+    if chart != None:
+        avgData = tradingmeasure.averageData(dataLists)
+        chart.writeChart(avgData)
 
+    return strategy
 
 
 def applyStrategy(strategy, futureData):
@@ -215,13 +228,75 @@ def applyStrategy(strategy, futureData):
 
     return money
 
-def main():
+def testMain():
     print("Verifying...")
     fileName = 'data/F_5_NETWORKS_INC.csv'
-    for i in range(760,650,-6):
+    for i in range(1500,650,-20):
         result = verify(fileName, i)
         print(result)
 
+def randomTestOnFile(fileName):
+    import random
+    global groupSize
 
+    data, headers = para.readFile(fileName)
+    length = len(data['Close']) - groupSize
+    cases = filter(lambda v : random.random() < 0.05, range(0,length))
+
+    results = []
+    for i in cases:
+        result = verify(fileName, i)
+        if result != None:
+            results.append(result)
+    return results
+
+
+def main():
+    print('Start Test')
+    files = util.listDataFiles()
+
+    results = []
+    for file in files:
+        print('> Test ' + file)
+        results += randomTestOnFile(file)
+
+
+    first = lambda r : r[0]
+    second = lambda r : r[1]
+
+    tradedPeriodsMoney = list(map(first, filter(second, results)))
+    allPeriodsMoney = list(map(first, results))
+
+    print('\nTests Complete\n')
+
+    import statistics
+    tradedCount = len(tradedPeriodsMoney)
+    allCount = len(allPeriodsMoney)
+    if tradedCount == 0:
+        tradedMean = 'N/A'
+        tradedSD = 'N/A'
+    else:
+        tradedMean = statistics.mean(tradedPeriodsMoney)
+        tradedSD = statistics.stdev(tradedPeriodsMoney)
+
+    if allCount == 0:
+        allMean = 'N/A'
+        allSD = 'N/A'
+    else:
+        allMean = statistics.mean(allPeriodsMoney)
+        allSD = statistics.stdev(allPeriodsMoney)
+
+    sb = []
+    sb.append('Traded: ' + str(tradedCount) + ' / ' + str(allCount))
+    sb.append('Traded Periods Money: ' + str(tradedMean) + ' +/- ' + str(tradedSD))
+    sb.append('All Periods Money: ' + str(allMean) + ' +/- ' + str(allSD))
+    s = '\n'.join(sb)
+
+    print(s)
+    global resultsFile
+    f = open(resultsFile, 'w+')
+    f.write(s)
+    f.close()
+    
 if __name__ == '__main__':
     main()

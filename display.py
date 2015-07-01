@@ -31,16 +31,6 @@ def plotnormalizedWith(data, group, normalizeFuns):
     #plt.show()
 
 
-
-def getNameOnly(s):
-    firstSlash = s.find('/')
-    if firstSlash != -1:
-        s = s[firstSlash+1:]
-    lastDot = s.rfind('.')
-    if lastDot != -1:
-        s = s[:lastDot]
-    return s
-
 def nameToFile(s):
     return 'data/' + s + '.csv'
 
