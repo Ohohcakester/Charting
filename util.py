@@ -29,13 +29,13 @@ def getNameOnly(s):
 
 
 
-def listDataFiles():
+def listDataFiles(directory = 'data'):
     import os
 
     def extension(s):
         return s[-4:] == '.csv'
     def addDir(s):
-        return 'data/' + s
+        return directory + '/' + s
 
-    files = map(addDir, filter(extension, os.listdir('data')))
+    files = map(addDir, filter(extension, os.listdir(directory)))
     return files
