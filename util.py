@@ -29,7 +29,7 @@ def getNameOnly(s):
 
 
 
-def listDataFiles(directory = 'data'):
+def listDataFiles(directory = 'data_'):
     import os
 
     def extension(s):

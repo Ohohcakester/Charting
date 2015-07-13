@@ -14,6 +14,12 @@ def computeWithFunOn(sourceData, targetData, policyFun, preprocessFun = None):
     return computeWithPoints(targetData, buySellPoints)
 
 
+# policyFun must be a function that returns a strategy.
+def computeWithStrategy(sourceData, targetData, policyFun):
+    strategy = policyFun(sourceData)
+    return computeWithPoints(targetData, strategy)
+
+
 # buySellPoints is a list/tuple that alternates between a buy and a sell..
 def computeWithPoints(data, buySellPoints):
     data = similarity.byFirst(data)
@@ -64,6 +70,41 @@ def averageData(dataLists):
     return list(map(statistics.mean, datapoints))
 
 """ REGION: UTILITY - END """
+
+
+""" REGION: TRADING POLICIES : STRAETGY - START """
+# Strategy(index, futureData)
+# 1 means buy, -1 means sell, 0 means do nothing.
+
+def buyingThreshold(fraction):
+    def fun(data):
+        meanList, sdList = computeMeanAndSD(data)
+        last = len(data)-1
+        if data[last] < data[0]:
+            return None
+
+        class Strategy:
+            def __init__(self, limit):
+                self.bought = False
+                self.limit = limit
+                self.data = data
+            def decide(self, i, futureData):
+                if self.bought:
+                    return 0
+                if futureData[i] < limit:
+                    self.bought = True
+                    return 1
+
+        limit = min(data)
+        limit = 1 - fraction*(1-limit)
+        strat = Strategy(limit)
+        return strategy.decide
+
+
+
+
+""" REGION: TRADING POLICIES : STRAETGY - END """
+
 
 
 """ REGION: TRADING POLICIES : GENERAL - START """

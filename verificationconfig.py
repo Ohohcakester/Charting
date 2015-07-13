@@ -1,22 +1,25 @@
 import similarity
 import tradingmeasure
 
+datasetname = 'nil'
+
 class TradingConfig:
 
     def __init__(self):
         #configure options here
         self.groupSize = 75
+        self.predictSize = 30
         self.algo = 'mindist.sax_1'
         self.strategy = 'sellOrKeep'
         
 
         #runConfig...
-        global tradeStrategy, algosToTest
+        global tradeStrategy, algosToTest, datasetname
         self.similarityMeasure = algosToTest[self.algo]
         self.tradePolicy, self.tradingPreprocess = tradeStrategy[self.strategy]
 
         fileTokens = [self.groupSize, self.algo, self.strategy]
-        self.resultsFile = 'verification_' + '_'.join(map(str,fileTokens)) + '.txt'
+        self.resultsFile = datasetname + '_verification_' + '_'.join(map(str,fileTokens)) + '.txt'
 
 
 

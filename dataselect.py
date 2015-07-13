@@ -2,8 +2,9 @@ import parameters as para
 #Format of group:
 # (startindex, endindex, data, index) #bitmap deprecated
 
-def findMatches(data, groups):
-    chooseFun = 2
+def findMatches(data, groups, chooseFun = None):
+    if chooseFun == None:
+        chooseFun = 2
 
     criteriaFun = [
         breakHigh(yearsToDays(1), yearsToDays(5)),
@@ -353,7 +354,8 @@ def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, en
 
 
 def main():
-    data, headers = para.readFile('data/AKAMAI_TECHNOLOGIES_INC.csv')
+    #data, headers = para.readFile('data/AKAMAI_TECHNOLOGIES_INC.csv')
+    data, headers = para.readFile('data_334111/HURCO_COMPANY.csv')
 
     start = None
     end = None

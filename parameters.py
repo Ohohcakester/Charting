@@ -27,7 +27,7 @@ def readFile(fileName):
         if len(cols) == 0: data[headers[i]] = []
         else: data[headers[i]] = cols[i]
         
-    #reverseAll()
+    reverseAll()
     convertformat('Date', mapdateSlash)
     #convertformat('Date', mapdate)
     createformat('Day', 'Date', mapDateToDay)
@@ -50,6 +50,7 @@ def readFile(fileName):
         cachedFiles[fileName] = data, headers
 
     return data, headers
+
 
 
 def reverseAll():
