@@ -27,7 +27,7 @@ def readFile(fileName):
         if len(cols) == 0: data[headers[i]] = []
         else: data[headers[i]] = cols[i]
         
-    reverseAll()
+    #reverseAll()
     convertformat('Date', mapdateSlash)
     #convertformat('Date', mapdate)
     createformat('Day', 'Date', mapDateToDay)
@@ -37,6 +37,10 @@ def readFile(fileName):
     convertformat('Close', float)
     #convertformat('Volume', int)
     #convertformat('Adj Close', float)
+
+    days = data['Day']
+    if len(days) >= 2 and days[1] < days[0]:
+        raise ValueError('ERROR! Days are in reverse order!')
 
     #applyVarParameter('DiffClose', 'Close', runningAverageDifference(20,40))
     #applyVarParameter('AvgClose', 'Close', averageLast(10))

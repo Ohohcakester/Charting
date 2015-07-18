@@ -5,31 +5,41 @@ import tradingmeasure
 import util
 import verificationconfig
 import chartprinter
+import randomverify
 
-dataSource = 'data_' + verificationconfig.datasetname
 
-config = verificationconfig.configure()
+def initialise(**kwargs):
+    global config, dataSource, groupSize, predictSize, similarityMeasure
+    global tradePolicy, tradingPreprocess, resultsFile, outputCharts
 
-groupSize = config.groupSize
-predictSize = config.predictsize
-similarityMeasure = config.similarityMeasure
-tradePolicy = config.tradePolicy
-tradingPreprocess = config.tradingPreprocess
-resultsFile = config.resultsFile
+    if len(kwargs) == 0:
+        config = verificationconfig.configure()
+    else:
+        config = verificationconfig.configureManual(**kwargs)
 
-outputCharts = True
+    dataSource = 'data_' + config.datasetname
+    chartprinter.initialise(config.datasetname)
+
+    groupSize = config.groupSize
+    predictSize = config.predictSize
+    similarityMeasure = config.similarityMeasure
+    tradePolicy = config.tradePolicy
+    tradingPreprocess = config.tradingPreprocess
+    resultsFile = config.resultsFile
+
+    outputCharts = True
 
 
 """ TEST FRAMEWORK - START """
 
-def getKnownFun(todayIndex):
+def getKnownFun(tomorrowIndex):
     def fun(dataList):
-        return dataList[:todayIndex]
+        return dataList[:tomorrowIndex]
     return fun
 
-def getFutureFun(todayIndex, answerLength):
+def getFutureFun(tomorrowIndex, answerLength):
     def fun(dataList):
-        return dataList[todayIndex:todayIndex+answerLength]
+        return dataList[tomorrowIndex:tomorrowIndex+answerLength]
     return fun
 
 def getDefaultEarnings(futureData):
@@ -37,19 +47,21 @@ def getDefaultEarnings(futureData):
     return close[-1]/close[0]
 
 def verify(fileName, todayIndex):
+    tomorrowIndex = todayIndex + 1
+
     global groupSize, predictSize, config
     if outputCharts == True:
-        chart = chartprinter.new(fileName, todayIndex, config.algo, groupSize) 
+        chart = chartprinter.new(fileName, tomorrowIndex, config.algo, groupSize, predictSize) 
     else:
         chart = None
 
     data, headers = para.readFile(fileName)
 
-    if todayIndex - groupSize < 0: return None
-    if todayIndex + predictSize > len(data['Close']): return None
+    if tomorrowIndex - groupSize < 0: return None
+    if tomorrowIndex + predictSize > len(data['Close']): return None
 
-    getKnownData = getKnownFun(todayIndex)
-    getFutureData = getFutureFun(todayIndex, predictSize)
+    getKnownData = getKnownFun(tomorrowIndex)
+    getFutureData = getFutureFun(tomorrowIndex, predictSize)
 
     knownData = {}
     futureData = {}
@@ -89,18 +101,6 @@ def groupByLast(data, dataList, groupSize):
         def fun(day):
             return lowerLimit <= day and day <= upperLimit
         return fun
-
-        """
-        if upperLimit > 31 or lowerLimit < 0:
-            if upperLimit > 31: upperLimit -= 31
-            if lowerLimit < 0: lowerLimit += 31
-            def fun(day):
-                return day <= upperLimit or day >= lowerLimit
-            return fun
-        else:
-            def fun(day):
-                return lowerLimit <= day and day <= upperLimit
-            return fun"""
 
     isInRange = inRangeFunction(firstGroupDay, 3)
 
@@ -146,6 +146,7 @@ def createStrategyFromPolicy(sourceData):
     if tradingPreprocess != None:
         sourceData = tradingPreprocess(sourceData)
     buySellPoints = tradePolicy(sourceData)
+    #print(buySellPoints)
 
     buy = []
     sell = []
@@ -157,7 +158,9 @@ def createStrategyFromPolicy(sourceData):
             sell.append(buySellPoints[i])
 
     def strategy(i, futureData):
-        if i in buy: return 1
+        if i in buy:
+            if i in sell: return 0
+            return 1
         if i in sell: return -1
         return 0
     return strategy
@@ -177,11 +180,22 @@ def printGroups(groups):
     print('[' + ', '.join(map(groupToStr, groups)) + ']')
 
 
+def getDataselectPoints(knownData):
+    return dataselect.getEndPoints(dataselect.findDoubleTopsFiltered(knownData))
+
 def decideStrategy(knownData, groupSize, predictSize, chart = None):
     global tradePolicy, tradingPreprocess, similarityMeasure
-
+    
     dates = knownData['Date']
     fullData = knownData['Close']
+    points = getDataselectPoints(knownData)
+    #print(points)
+    #if len(points) > 0 and len(fullData)-1 in points:
+    #    print(points)
+    #    print(len(fullData)-1)
+    if len(fullData)-1 not in points:
+        return dontTrade()
+
     groups = groupByLast(knownData, fullData, groupSize)
 
     if (len(groups) < 20): return dontTrade()
@@ -190,11 +204,13 @@ def decideStrategy(knownData, groupSize, predictSize, chart = None):
     #printGroups(groups)
     # TODO: What are the group indexes for? Reversing them seems to throw it all over the place...
 
-    matches = dataselect.findMatches(knownData, groups)
+    """
+    matches = dataselect.findMatches(knownData, groups, 2)
     printGroups(matches)
     #printGroup(groups[target])
     if groups[target] not in matches:
         return dontTrade()
+    """
 
     similarity.normalizeFuns = [similarity.byMean]
     similarity.measureFun = similarityMeasure
@@ -205,6 +221,7 @@ def decideStrategy(knownData, groupSize, predictSize, chart = None):
     results.sort(key=lambda x : x[1])
 
     nResults = 10
+    #print(','.join(map(lambda x : str(x[0]), results[0:nResults])))
     dataLists = getDataLists(fullData, groups, results[0:nResults], predictSize)
     strategy = createStrategyFromPolicy(dataLists)
 
@@ -219,6 +236,8 @@ def applyStrategy(strategy, futureData):
     prices = futureData['Close']
     money = 1
     stock = 0
+
+    #print(list(map(lambda x : strategy(x,prices), range(0,len(prices)))))
 
     for i in range(0,len(prices)):
         action = strategy(i, prices)
@@ -249,8 +268,26 @@ def randomTestOnFile(fileName):
     global predictSize
 
     data, headers = para.readFile(fileName)
-    length = len(data['Close']) - predictSize
+    length = len(data['Close']) - predictSize - 1
     cases = filter(lambda v : random.random() < 0.05, range(0,length))
+
+    results = []
+    for i in cases:
+        result = verify(fileName, i)
+        if result != None:
+            results.append(result)
+    return results
+
+def selectiveTestOnFile(fileName):
+    import random
+    global predictSize
+
+    data, headers = para.readFile(fileName)
+    length = len(data['Close']) - predictSize - 1
+
+    cases = list(filter(lambda v : v < length, getDataselectPoints(data)))
+    #print('Cases: ' + str(cases))
+    #cases = filter(lambda v : random.random() < 0.05, range(0,length))
 
     results = []
     for i in cases:
@@ -262,16 +299,18 @@ def randomTestOnFile(fileName):
 
 def main():
     print('Start Test')
-    global dataSource
+    global dataSource, predictSize
     if dataSource == None:
         files = util.listDataFiles()
     else:
         files = util.listDataFiles(dataSource)
 
     results = []
+    results2 = []
     for file in files:
-        print('> Test ' + file)
-        results += randomTestOnFile(file)
+        #print('> Test ' + file)
+        results += selectiveTestOnFile(file)
+        results2 += randomverify.verify(file, predictSize)
 
 
     first = lambda r : r[0]
@@ -280,13 +319,17 @@ def main():
 
     tradedPeriodsMoney = list(map(first, filter(second, results)))
     allPeriodsMoney = list(map(first, results))
-    controlMoney = list(map(third, results))
+    tradedControlMoney = list(map(third, results))
+    randomControlMoney = results2
 
     print('\nTests Complete\n')
 
     import statistics
     tradedCount = len(tradedPeriodsMoney)
     allCount = len(allPeriodsMoney)
+    tradedControlCount = len(tradedControlMoney)
+    randomControlCount = len(randomControlMoney)
+
     if tradedCount == 0:
         tradedMean = 'N/A'
         tradedSD = 'N/A'
@@ -297,23 +340,37 @@ def main():
     if allCount == 0:
         allMean = 'N/A'
         allSD = 'N/A'
-        controlMean = 'N/A'
-        controlSD = 'N/A'
     else:
         allMean = statistics.mean(allPeriodsMoney)
         allSD = statistics.stdev(allPeriodsMoney)
-        controlMean = statistics.mean(controlMoney)
-        controlSD = statistics.stdev(controlMoney)
+
+    if tradedControlCount == 0:
+        tradedControlMean = 'N/A'
+        tradedControlSD = 'N/A'
+    else:
+        tradedControlMean = statistics.mean(tradedControlMoney)
+        tradedControlSD = statistics.stdev(tradedControlMoney)
+
+    if randomControlCount == 0:
+        randomControlMean = 'N/A'
+        randomControlSD = 'N/A'
+    else:
+        randomControlMean = statistics.mean(randomControlMoney)
+        randomControlSD = statistics.stdev(randomControlMoney)
 
     sb = []
+    global resultsFile
+    sb.append(resultsFile)
     sb.append('Traded: ' + str(tradedCount) + ' / ' + str(allCount))
     sb.append('Traded Periods Money: ' + str(tradedMean) + ' +/- ' + str(tradedSD))
     sb.append('All Periods Money: ' + str(allMean) + ' +/- ' + str(allSD))
-    sb.append('Control Money (All Periods): ' + str(controlMean) + ' +/- ' + str(controlSD))
+    sb.append('Traded Control Money (All Periods): ' + str(tradedControlMean) + ' +/- ' + str(tradedControlSD))
+    sb.append('')
+    sb.append('Random Control Count: ' + str(randomControlCount))
+    sb.append('Control Money (Random Periods): ' + str(randomControlMean) + ' +/- ' + str(randomControlSD))
     s = '\n'.join(sb)
 
     print(s)
-    global resultsFile
     f = open(resultsFile, 'w+')
     f.write(s)
     f.close()
@@ -337,7 +394,27 @@ def predict():
     if strategy == None: print("don't trade")
 
 
+def testAll():
+    groupSizes = [75,150,240]
+    predictSizes = [15,30,75]
+    algos = ['sts','dtw','mindist.sax_1']
+    strategies = ['sellOrKeep']
+    datasetnames = ['','334111','211111','454111']
+
+    for groupSize in groupSizes:
+        for predictSize in predictSizes:
+            for algo in algos:
+                for strategy in strategies:
+                    for datasetname in datasetnames:
+                        initialise(groupSize=groupSize, predictSize=predictSize,algo=algo,strategy=strategy,datasetname=datasetname)
+                        main()
+
+
 
 if __name__ == '__main__':
-    predict()
+    testAll()
+
+    #initialise()
     #main()
+
+    #predict()

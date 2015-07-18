@@ -17,7 +17,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 0
+    choice = 2
 
     options = {
         0:runTests,
@@ -96,7 +96,7 @@ def viewGraph():
 
 
 def runVisualise():
-    fileName = 'data/AMERICAN_MANAGEMENT_SYSTEMS_INC.csv'
+    fileName = 'data_/AMERICAN_MANAGEMENT_SYSTEMS_INC.csv'
     #fileName = 'table.csv'
     targetGroup = 89
 

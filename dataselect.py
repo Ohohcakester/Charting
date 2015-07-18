@@ -355,7 +355,7 @@ def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, en
 
 def main():
     #data, headers = para.readFile('data/AKAMAI_TECHNOLOGIES_INC.csv')
-    data, headers = para.readFile('data_334111/HURCO_COMPANY.csv')
+    data, headers = para.readFile('data_334111/FUSION_I_O_INC.csv')
 
     start = None
     end = None

@@ -1,25 +1,25 @@
 import similarity
 import tradingmeasure
 
-datasetname = 'nil'
-
 class TradingConfig:
 
-    def __init__(self):
+    def __init__(self, defaultValues = True):
         #configure options here
-        self.groupSize = 75
-        self.predictSize = 30
-        self.algo = 'mindist.sax_1'
-        self.strategy = 'sellOrKeep'
+        if defaultValues:
+            self.groupSize = 200
+            self.predictSize = 30
+            self.algo = 'mindist.sax_1'
+            self.strategy = 'sellOrKeep'
+            self.datasetname = '334111'
         
-
+    def initialise(self):
         #runConfig...
         global tradeStrategy, algosToTest, datasetname
         self.similarityMeasure = algosToTest[self.algo]
         self.tradePolicy, self.tradingPreprocess = tradeStrategy[self.strategy]
 
-        fileTokens = [self.groupSize, self.algo, self.strategy]
-        self.resultsFile = datasetname + '_verification_' + '_'.join(map(str,fileTokens)) + '.txt'
+        fileTokens = [self.groupSize, self.predictSize, self.algo, self.strategy]
+        self.resultsFile = self.datasetname + '_verification_' + '_'.join(map(str,fileTokens)) + '.txt'
 
 
 
@@ -88,4 +88,15 @@ algosToTest = {
 
 
 def configure():
-    return TradingConfig()
+    config = TradingConfig()
+    config.initialise()
+    return config
+
+
+def configureManual(**kwargs):
+    config = TradingConfig(False)
+    for key in kwargs:
+        setattr(config, key, kwargs[key])
+
+    config.initialise()
+    return config

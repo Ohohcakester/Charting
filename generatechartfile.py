@@ -1,11 +1,12 @@
 import parameters as para
 
-datasetname = '454111'
+datasetname = ''
 
 sourceDir = 'ChartOutput_'+datasetname
 outputFile = 'combinedChart_'+datasetname+'.txt'
 
-nameLookupFile = 'dataNew/all/'+datasetname+'.csv'
+#nameLookupFile = 'dataNew/all/'+datasetname+'.csv'
+nameLookupFile = 'data_/all/alldata.csv'
 dataFilesDir = 'data_'+datasetname+'/'
 
 nameMap = None
@@ -47,13 +48,19 @@ def parseRow(rawRow):
     cols = rawRow.split(',')
     fileName = toFileName(cols[0])
 
-    cols[0] = translateName(cols[0])
-    cols[1] = translateDate(fileName, cols[1])
+    newcols = [
+        translateName(cols[0]),           #Permno
+        cols[0],                          #Comnam
+        translateDate(fileName, cols[1]), #Date
+        cols[2], #algo
+        cols[3], #groupSize
+        cols[4], #predictSize
+        ]+cols[5:]
 
-    return ','.join(map(str,cols))
+    return ','.join(map(str,newcols))
 
 def getHeaders(groupSize):
-    headers = ['PERMNO', 'DATE', 'ALGO', 'GROUPSIZE']
+    headers = ['PERMNO', 'COMNAM', 'DATE', 'ALGO', 'GROUPSIZE', 'PREDICTSIZE']
     headers += map(lambda n : 'T' + str(n), range(0,groupSize))
     return ','.join(headers)
 
@@ -63,7 +70,7 @@ def generateChartFile():
     rowFiles = os.listdir(sourceDir)
 
     outputF = open(outputFile, 'w+')
-    outputF.write(getHeaders(75))
+    outputF.write(getHeaders(240))
     outputF.write('\n')
 
     for rowFile in rowFiles:

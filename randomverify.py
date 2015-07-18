@@ -2,17 +2,24 @@ import parameters as para
 import util
 import random
 
-predictSize = 75
+defaultPredictSize = 75
 probability = 0.05
 
-def computeResults(datalist):
-    global predictSize, probability
+def computeResults(datalist, predictSize = None):
+    if predictSize == None:
+        global defaultPredictSize
+        predictSize = defaultPredictSiz
+
+    global probability
     results = []
     for i in range(0,len(datalist)-predictSize):
         if random.random() < probability:
             results.append(datalist[i+predictSize]/datalist[i])
     return results
 
+def verify(fileName, predictSize):
+    data, headers = para.readFile(fileName)
+    return computeResults(data['Close'], predictSize)
 
 def main():
     dataFiles = util.listDataFiles()
