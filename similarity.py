@@ -5,15 +5,6 @@ import rbind
 
 """ REGION: MAIN FUNCTIONS - START """
 
-def computeConditionScore(group1, group2):
-    if len(group1[4]) == 0: return 0
-
-    LARGE_CONSTANT = 10000
-    def match(x,y):
-        if x == y: return 1
-        return 0
-    return LARGE_CONSTANT * sum([match(x,y) for x,y in zip(group1[4], group2[4])])
-
 # Computes the similarity score between two groups.
 def compute(group1, group2):
     global measureFun
@@ -44,10 +35,74 @@ def normalizeWith(data, normalizeFuns):
         data = fun(data)
     return data
 
+def computeConditionScore(group1, group2):
+    if len(group1[4]) == 0: return 0
 
-
+    LARGE_CONSTANT = 10000
+    def match(x,y):
+        if x == y: return 1
+        return 0
+    return LARGE_CONSTANT * sum([match(x,y) for x,y in zip(group1[4], group2[4])])
 
 """ REGION: MAIN FUNCTIONS - END """
+
+""" REGION: NORMALIZATION FUNCTIONS - START """
+
+
+def byMean(dataList):
+    mean = sum(dataList) / len(dataList)
+    return list(map(lambda v : v / mean, dataList))
+
+def byFirst(dataList):
+    first = dataList[0]
+    return list(map(lambda v : v / first, dataList))
+
+def byRatio(dataList):
+    return list(map(lambda i : dataList[i]/dataList[i-1], range(1,len(dataList))))
+
+def avgSmooth(size):
+    def fun(dataList):
+        newlist = []
+        for i in range(size,len(dataList)):
+            newlist.append(sum(dataList[i-size:i]))
+        return newlist
+    return fun
+
+def weightedSmooth(size):
+    def fun(dataList):
+        newlist = []
+        weights = list(range(1,size+1))
+        sumweights = sum(weights)
+        for i in range(0,len(dataList)-size):
+            total = 0
+            for j in range(0,size):
+                total += weights[j] * dataList[i+j]
+            newlist.append(total)
+        return newlist
+    return fun
+
+
+""" REGION: NORMALIZATION FUNCTIONS - END """
+
+
+""" REGION: SIMILARITY MEASURES - START """
+# Format of similarity measure: (floatArray,floatArray) -> float
+# We can assume both arrays are of the same length
+
+def lpNorms(p):
+    def fun(data1, data2):
+        diff = map(lambda i : abs(data1[i]-data2[i])**p, range(0,len(data1)))
+        return (sum(diff))**(1/p)
+    return fun
+
+# Gets a measure from the r TSdist library.
+# Example: r('dtwDistance') returns a dtw distance similarity measure.
+def tsdist(measureName, *args, **kwargs):
+    def fun(data1, data2):
+        return rbind.run_ts(data1, data2, measureName, *args, **kwargs)
+    return fun
+
+""" REGION: SIMILARITY MEASURES - END """
 
 
 """ REGION: DATA REPAIR FUNCTIONS - START """
@@ -79,68 +134,6 @@ def avgRepair(group1, group2):
 
 
 """ REGION: DATA REPAIR FUNCTIONS - END """
-
-
-""" REGION: NORMALIZATION FUNCTIONS - START """
-
-
-def byMean(data):
-    mean = sum(data) / len(data)
-    return list(map(lambda v : v / mean, data))
-
-def byFirst(data):
-    first = data[0]
-    return list(map(lambda v : v / first, data))
-
-def byRatio(data):
-    return list(map(lambda i : data[i]/data[i-1], range(1,len(data))))
-
-def avgSmooth(size):
-    def fun(data):
-        newlist = []
-        for i in range(size,len(data)):
-            newlist.append(sum(data[i-size:i]))
-        return newlist
-    return fun
-
-def weightedSmooth(size):
-    def fun(data):
-        newlist = []
-        weights = list(range(1,size+1))
-        sumweights = sum(weights)
-        for i in range(0,len(data)-size):
-            total = 0
-            for j in range(0,size):
-                total += weights[j] * data[i+j]
-            newlist.append(total)
-        return newlist
-    return fun
-
-
-""" REGION: NORMALIZATION FUNCTIONS - END """
-
-
-
-""" REGION: SIMILARITY MEASURES - START """
-# Format of similarity measure: (floatArray,floatArray) -> float
-# We can assume both arrays are of the same length
-
-def lpNorms(p):
-    def fun(data1, data2):
-        diff = map(lambda i : abs(data1[i]-data2[i])**p, range(0,len(data1)))
-        return (sum(diff))**(1/p)
-    return fun
-
-# Gets a measure from the r TSdist library.
-# Example: r('dtwDistance') returns a dtw distance similarity measure.
-def tsdist(measureName, *args, **kwargs):
-    def fun(data1, data2):
-        return rbind.run_ts(data1, data2, measureName, *args, **kwargs)
-    return fun
-
-
-
-""" REGION: SIMILARITY MEASURES - END """
 
 #repairFun = avgRepair # repair is deprecated
 #measureFun = lpNorms(1)

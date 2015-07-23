@@ -1,9 +1,10 @@
 
 # returns a dictionary of testcases {fileName : groupIndexList)
-def readTests():
+def readTests(chooseCollection = None):
     d = {}
 
-    choice = 'dtf'
+    if chooseCollection == None: chooseCollection = 'dtf'
+
     testFileName = {
         'trun': 'testcases/fyh_truncated.txt',
         'fyh': 'testcases/fyh_formatted.txt',
@@ -11,7 +12,7 @@ def readTests():
         'rand1': 'testcases/rand1_formatted.txt',
         'rand2': 'testcases/rand2_formatted.txt',
         'rand3': 'testcases/rand3_formatted.txt', # small testcase
-    }[choice]
+    }[chooseCollection]
 
     f = open(testFileName)
     for line in f:

@@ -2,32 +2,51 @@ import parameters as para
 #Format of group:
 # (startindex, endindex, data, index) #bitmap deprecated
 
-def findMatches(data, groups, chooseFun = None):
-    if chooseFun == None:
-        chooseFun = 2
+# Change the default configuration here. (choice of criteria from those available below in criteriaOptions)
+defaultChoice = 2
 
-    criteriaFun = [
-        breakHigh(yearsToDays(1), yearsToDays(5)),
-        compose(getEndPoints, findDoubleTops),
-        compose(getEndPoints, findDoubleTopsFiltered),
-        randomMatch(0.003),
-        ][chooseFun]
+# The different critera that can be used for dataselect are defined here.
+def configureCriteriaOptions():
+    def configure(criteriaFun, criteriaType, singleTS): return (criteriaFun, criteriaType, singleTS)
+    global criteriaOptions
+    criteriaOptions = {
+        # criteria 0: break five-years-high
+        0: configure (
+            criteriaFun = breakHigh(yearsToDays(1), yearsToDays(5)),
+            criteriaType = byPoints,
+            singleTS = True,
+            ),
 
-    criteriaType = [
-        byPoints,
-        byPoints,
-        byPoints,
-        byIndividual,
-        ][chooseFun]
+        # criteria 1: Double Tops
+        1: configure (
+            criteriaFun = compose(getEndPoints, findDoubleTops),
+            criteriaType = byPoints,
+            singleTS = False,
+            ),
 
-    # corresponds to the criteriaFuns.
-    # true iff criteriaFun accepts a single time series data (close) instead of the data object.
-    singleTS = [
-        True,
-        False,
-        False,
-        True,
-        ][chooseFun]
+        # criteria 2: Double Tops Filtered
+        2: configure (
+            criteriaFun = compose(getEndPoints, findDoubleTopsFiltered),
+            criteriaType = byPoints,
+            singleTS = False,
+            ),
+
+        # criteria 3: Random select
+        3: configure (
+            criteriaFun = randomMatch(0.003),
+            criteriaType = byIndividual,
+            singleTS = True,
+            ),
+    }
+
+
+
+# choice is numeric (which configuration to use)
+def findMatches(data, groups, choice = None):
+    global defaultChoice, criteriaOptions
+
+    if choice == None: choice = defaultChoice
+    criteriaFun, criteriaType, singleTS = criteriaOptions[choice]
 
     if singleTS: data = data['Close']
 
@@ -352,6 +371,9 @@ def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, en
 
 """ REGION: UTILITY - END """
 
+""" REGION: INITIALISATION - END """
+configureCriteriaOptions()
+""" REGION: INITIALISATION - END """
 
 def main():
     #data, headers = para.readFile('data/AKAMAI_TECHNOLOGIES_INC.csv')

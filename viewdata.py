@@ -2,6 +2,14 @@ import os
 import traceback
 import parameters as para
 
+"""doc
+viewdata.py
+This is a somewhat standalone program used to query data from the files.
+
+
+
+"""
+
 dataPaths = {
     'original': 'data_/',
     '211111': 'data_211111/',

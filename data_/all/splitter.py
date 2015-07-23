@@ -1,3 +1,4 @@
+fileToSplit = 'alldata.csv'
 path = 'output/'
 
 def rename(headers, fromName, toName):
@@ -59,4 +60,4 @@ def splitFile(fileName):
         
         
         
-splitFile('alldata.csv')
+splitFile(fileToSplit)

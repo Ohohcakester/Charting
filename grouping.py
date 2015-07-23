@@ -3,61 +3,6 @@ import dataselect
 # You have to configure this manually to use getweekday/isweekend/nextfewweeks.
 firstsaturday = 1
 
-# 0 is monday, 6 is sunday.
-def isweekend(day):
-    day = getweekday(day)
-    return day == 5 or day == 6
-
-def getweekday(day):
-    # 0 is monday, 6 is sunday.
-    global firstsaturday
-    return (day-firstsaturday-2)%7
-
-# returns startindex, endindex, bitmap
-# no longer used in favour of "next n days"
-def nextfewweeks(index, firstmonday, days, dates, nweeks):
-    #monday to friday of n consecutive weeks
-    daylist = []
-    for w in range(0,nweeks):
-        base = w*7 + firstmonday
-        for d in range(0,5):
-            daylist.append(base + d)
-
-    bitmap = []
-    hits = 0
-    curr = index
-    while days[curr] < firstmonday:
-        curr += 1
-
-    for i in range(0,len(daylist)):
-        if curr >= len(days):
-            return None, None, None
-        if daylist[i] == days[curr]:
-            curr += 1
-            hits += 1
-            bitmap.append(b'\x01')
-        else:
-            bitmap.append(b'\x00')
-    bitmap = b''.join(bitmap)
-
-    #if len(daylist) - hits >= 5:
-    #    return None
-
-    endindex = curr
-    return index, endindex, bitmap
-
-# returns startindex, endindex
-# next n days (data points) starting from index.
-def nextndays(index, days, ndays):
-    #get the next n data points.
-    endindex = index + ndays
-    if endindex >= len(days):
-        return None, None
-    return index, endindex
-
-
-
-
 # each group is a tuple (startindex, endindex, data, index, conditionData)
 # minDay is the day to start searching from.
 def groupUp(data, dataList, minDay = 0):
@@ -85,6 +30,9 @@ def splitIntoGroups(data, dataList, minDay = 0):
                 group = (start, end, dataList[start:end], len(groups))
                 groups.append(group)
     return groups
+
+
+""" REGION: Other types of Grouping policies - START """
 
 def splitIntoGroupsFree(data, dataList, minDay = 0):
     groups = []
@@ -163,6 +111,7 @@ def splitIntoGroupsFreeMonths(data, dataList, minDay = 0):
                 groups.append(group)
     return groups
 
+""" REGION: Other types of Grouping policies - END """
 
 
 # Each condition must be in a tuple (criteriaType, criteriaFun)
@@ -186,9 +135,12 @@ def groupWithConditionData(*conditions):
     return fun
 
 
+""" REGION: Changing the Grouping Policy before calling groupUp - START """
+
 def redefineGroupingConditions(*conditions):
     global groupUp
     groupUp = groupWithConditionData(*conditions)
+
 
 def changeToFreeGroups():
     global groupUp
@@ -214,3 +166,62 @@ def changeToVariableMonthsGroups():
     def groupUp(data, dataList, minDay = 0):
         groups = splitIntoGroupsVariableMonths(data, dataList, minDay)
         return list(map(lambda group : group + ((),), groups))
+
+""" REGION: Changing the Grouping Policy before calling groupUp - END """
+
+
+""" REGION: UTILITY FUNCTIONS - START """
+
+# 0 is monday, 6 is sunday.
+def isweekend(day):
+    day = getweekday(day)
+    return day == 5 or day == 6
+
+def getweekday(day):
+    # 0 is monday, 6 is sunday.
+    global firstsaturday
+    return (day-firstsaturday-2)%7
+
+# returns startindex, endindex, bitmap
+# no longer used in favour of "next n days"
+def nextfewweeks(index, firstmonday, days, dates, nweeks):
+    #monday to friday of n consecutive weeks
+    daylist = []
+    for w in range(0,nweeks):
+        base = w*7 + firstmonday
+        for d in range(0,5):
+            daylist.append(base + d)
+
+    bitmap = []
+    hits = 0
+    curr = index
+    while days[curr] < firstmonday:
+        curr += 1
+
+    for i in range(0,len(daylist)):
+        if curr >= len(days):
+            return None, None, None
+        if daylist[i] == days[curr]:
+            curr += 1
+            hits += 1
+            bitmap.append(b'\x01')
+        else:
+            bitmap.append(b'\x00')
+    bitmap = b''.join(bitmap)
+
+    #if len(daylist) - hits >= 5:
+    #    return None
+
+    endindex = curr
+    return index, endindex, bitmap
+
+# returns startindex, endindex
+# next n days (data points) starting from index.
+def nextndays(index, days, ndays):
+    #get the next n data points.
+    endindex = index + ndays
+    if endindex >= len(days):
+        return None, None
+    return index, endindex
+
+""" REGION: UTILITY FUNCTIONS - END """

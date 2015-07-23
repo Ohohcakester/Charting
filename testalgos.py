@@ -9,31 +9,7 @@ import util
 testOutputFilename = 'testresults_test.txt'
 #testOutputFilename = 'results_confidenceSellOrKeep_fyh_nocond_byFirst.txt'
 
-def getSimilarity(groups, i, j):
-    sim = similarity.compute(groups[i], groups[j])
-    return (i,j,sim)
-    
-
-def compareAllGroupsTo(groups, targetIndex):
-    results = []
-    print(dates[groups[targetIndex][0]])
-    print(dates[groups[targetIndex][1]])
-    for i in range(0,len(groups)):
-        if i != targetIndex:
-            results.append(getSimilarity(groups,i,targetIndex))
-    return results
-
-def compareAllGroupsBefore(groups, targetIndex):
-    return list(map(lambda i : getSimilarity(groups, i, targetIndex), range(0,targetIndex)))
-
-# assume results is sorted.
-def getRank(results, index):
-    for i in range(0,len(results)):
-        if results[i][0] == index:
-            return i+1
-    return -1
-
-
+# test all algos
 algosToTest = {
     'acf': similarity.tsdist('acfDistance'),
     'ar.lpc.ceps': similarity.tsdist('ar.lpc.cepsDistance'),
@@ -86,7 +62,9 @@ algosToTest = {
     'tquest': similarity.tsdist('tquestDistance', tau=0.5), #seems to do nothing...?
     'wav': similarity.tsdist('wavDistance'),
 }
-algosToTest0 = {
+
+# test only a limited set
+algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
     'inf.norm': similarity.tsdist('inf.normDistance'),
     'cort': similarity.tsdist('cortDistance'),
@@ -100,77 +78,17 @@ algosToTest0 = {
     'dissim': similarity.tsdist('dissimDistance'),
 }
 
+# test an even more limited set
 algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
     'mindist.sax_1': similarity.tsdist('mindist.saxDistance',1),
     'dtw': similarity.tsdist('dtwDistance'),
 }
+
+# test only sts
 algosToTest = {
     'sts': similarity.tsdist('stsDistance'),
-    #'manhattan': similarity.tsdist('manhattanDistance'),
 }
-
-def formatResult(key, result):
-    s = map(str, [key] + list(result))
-    return '\t'.join(s)
-
-def printResult(key, result):
-    print(formatResult(key, result))
-
-def compareAlgorithms(fileName):
-    global data, headers
-    data, headers = para.readFile(fileName)
-    if (len(data['Date']) == 0):
-        print('Empty File')
-        return
-
-    global algosToTest
-    for key in algosToTest.keys():
-        print('Testing ' + key)
-        algo = algosToTest[key]
-        result = testAlgo(algo, 404)
-        printResult(key, result)
-
-def compareAlgorithmsWithData(testCases):
-    global algosToTest, data, headers, testOutputFilename
-    allResults = {}
-    for key in algosToTest.keys():
-        allResults[key] = []
-
-    for companyName in sorted(testCases.keys()):
-        print('Testing ' + companyName)
-        data, headers = para.readFile(display.nameToFile(companyName))
-        for key in sorted(algosToTest.keys()):
-            #print('    algo ' + key)
-            for target in testCases[companyName]:
-                algo = algosToTest[key]
-                result = testAlgo(algo, target)
-                if result != None:
-                    allResults[key].append(result)
-                    #printResult(key, result)
-
-    averageResults = {}
-    f = open(testOutputFilename, 'w+')
-    for key in allResults.keys():
-        averageResult = computeAverageResult(allResults[key])
-        s = formatResult(key, averageResult)
-        f.write(s+'\n')
-    f.close()
-
-
-def computeAverageResult(results):
-    import statistics
-    results = util.transposeLists(results)
-    print('Number of results: ' + str(len(results[0])))
-    return (statistics.mean(results[0]),
-            statistics.mean(results[1]),
-            statistics.mean(results[2]),
-            statistics.stdev(results[2]))
-
-
-def getDataLists(groups, results, offset):
-    return list(map(lambda v : groups[v[0]+offset][2], results))
-
 
 
 def testAlgo(algo, target):
@@ -218,3 +136,92 @@ def testAlgo(algo, target):
     totalRank /= len(results2) # normalize totalRank for equal weightage.
 
     return (lpScore/nResults, totalRank/nResults, money)
+
+
+def compareAlgorithms(fileName):
+    global data, headers
+    data, headers = para.readFile(fileName)
+    if (len(data['Date']) == 0):
+        print('Empty File')
+        return
+
+    global algosToTest
+    for key in algosToTest.keys():
+        print('Testing ' + key)
+        algo = algosToTest[key]
+        result = testAlgo(algo, 404)
+        printResult(key, result)
+
+
+def compareAlgorithmsWithData(testCases):
+    global algosToTest, data, headers, testOutputFilename
+    allResults = {}
+    for key in algosToTest.keys():
+        allResults[key] = []
+
+    for companyName in sorted(testCases.keys()):
+        print('Testing ' + companyName)
+        data, headers = para.readFile(display.nameToFile(companyName))
+        for key in sorted(algosToTest.keys()):
+            #print('    algo ' + key)
+            for target in testCases[companyName]:
+                algo = algosToTest[key]
+                result = testAlgo(algo, target)
+                if result != None:
+                    allResults[key].append(result)
+                    #printResult(key, result)
+
+    averageResults = {}
+    f = open(testOutputFilename, 'w+')
+    for key in allResults.keys():
+        averageResult = computeAverageResult(allResults[key])
+        s = formatResult(key, averageResult)
+        f.write(s+'\n')
+    f.close()
+
+
+def formatResult(key, result):
+    s = map(str, [key] + list(result))
+    return '\t'.join(s)
+
+def printResult(key, result):
+    print(formatResult(key, result))
+
+
+def computeAverageResult(results):
+    import statistics
+    results = util.transposeLists(results)
+    print('Number of results: ' + str(len(results[0])))
+    return (statistics.mean(results[0]),
+            statistics.mean(results[1]),
+            statistics.mean(results[2]),
+            statistics.stdev(results[2]))
+
+
+def getDataLists(groups, results, offset):
+    return list(map(lambda v : groups[v[0]+offset][2], results))
+
+
+def getSimilarity(groups, i, j):
+    sim = similarity.compute(groups[i], groups[j])
+    return (i,j,sim)
+    
+
+def compareAllGroupsTo(groups, targetIndex):
+    results = []
+    print(dates[groups[targetIndex][0]])
+    print(dates[groups[targetIndex][1]])
+    for i in range(0,len(groups)):
+        if i != targetIndex:
+            results.append(getSimilarity(groups,i,targetIndex))
+    return results
+
+def compareAllGroupsBefore(groups, targetIndex):
+    return list(map(lambda i : getSimilarity(groups, i, targetIndex), range(0,targetIndex)))
+
+# assume results is sorted.
+def getRank(results, index):
+    for i in range(0,len(results)):
+        if results[i][0] == index:
+            return i+1
+    return -1

@@ -17,7 +17,7 @@ data = {}
 headers = []
 
 def main():
-    choice = 2
+    choice = 1
 
     options = {
         0:runTests,
@@ -28,7 +28,6 @@ def main():
         5:viewGraph,
     }
     options[choice]()
-
 
 
 def runTests():
@@ -44,7 +43,7 @@ def runTests():
 
 """ REGION: DATA SELECT - START """
 def runDataSelect():
-    dataFiles = util.listDataFiles()
+    dataFiles = util.listDataFiles('data_454111')
     #dataFiles = util.getRandomSublist(dataFiles, 20)
 
     for f in dataFiles:
@@ -146,7 +145,7 @@ def runVisualise():
         print('Plotting Predicted Next Group (green)')
         display.plotnormalizedWith(data, groups[v[0]+util.ma], [similarity.byFirst])
         plt.show()
-            
+
 
 
 if __name__ == '__main__':
