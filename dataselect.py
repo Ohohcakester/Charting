@@ -2,6 +2,7 @@ import parameters as para
 #Format of group:
 # (startindex, endindex, data, index) #bitmap deprecated
 
+""" REGION: CONFIGURATION - START """
 # Change the default configuration here. (choice of criteria from those available below in criteriaOptions)
 defaultChoice = 2
 
@@ -9,6 +10,11 @@ defaultChoice = 2
 def configureCriteriaOptions():
     def configure(criteriaFun, criteriaType, singleTS): return (criteriaFun, criteriaType, singleTS)
     global criteriaOptions
+
+    # criteriaFun: The function used to filter out groups that match a criteria
+    # criteriaType: The type of function used. Either "byPoints" or "byIndividual"
+    # singleTS: True if the function operates on data['Close'] only. False if it operates on everything in data.
+
     criteriaOptions = {
         # criteria 0: break five-years-high
         0: configure (
@@ -39,13 +45,14 @@ def configureCriteriaOptions():
             ),
     }
 
+""" REGION: CONFIGURATION - END """
 
 
 # choice is numeric (which configuration to use)
 def findMatches(data, groups, choice = None):
     global defaultChoice, criteriaOptions
-
     if choice == None: choice = defaultChoice
+
     criteriaFun, criteriaType, singleTS = criteriaOptions[choice]
 
     if singleTS: data = data['Close']
@@ -150,6 +157,7 @@ def increasingAveragesFilter(dataList):
 
 """ REGION: UTILITY - START """
 
+# Compose multiple functions into one function
 def compose(*funs):
     # reverse the list.
     funs = funs[::-1]
@@ -371,7 +379,7 @@ def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, en
 
 """ REGION: UTILITY - END """
 
-""" REGION: INITIALISATION - END """
+""" REGION: INITIALISATION - START """
 configureCriteriaOptions()
 """ REGION: INITIALISATION - END """
 
