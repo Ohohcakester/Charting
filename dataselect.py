@@ -48,6 +48,8 @@ def configureCriteriaOptions():
 """ REGION: CONFIGURATION - END """
 
 
+""" REGION: MAIN CONTROLS - START """
+
 # choice is numeric (which configuration to use)
 def findMatches(data, groups, choice = None):
     global defaultChoice, criteriaOptions
@@ -80,13 +82,19 @@ def byPoints(fulldata, groups, criteria):
             selectedGroups.append(group)
     return selectedGroups
 
+""" REGION: MAIN CONTROLS - END """
+
 
 """ REGION: INDIVIDUAL CRITERION - START """
+# Format of an individual criteria (byIndividual) function:
+# function(fulldata, startIndex, endIndex)
+# Where startIndex, endIndex refers to the start, end points of the group.
+# returns: True if the group is to be selected, False if the group is to be omitted.
 
-def randomMatch(frac):
+def randomMatch(probability):
     import random
     def criteria(fulldata, startIndex, endIndex):
-        return random.random() < frac
+        return random.random() < probability
     return criteria
 
 
@@ -104,6 +112,10 @@ def containsPoints(markedPoints):
 
 
 """ REGION: POINTS CRITERION - START """
+# Format of a points criteria (byPoints) function:
+# function(fulldata)
+# returns: A set of points (by index) in the data which match the criteria.
+# - later on, we can use these points to select groups by identifying the groups that contain these points.
 
 def randomPoints(frac):
     import random
@@ -131,12 +143,12 @@ def breakHigh(minDays, maxDays):
 
 """ REGION: POINTS CRITERION - END """
 
+
+
 """ REGION: INTERVAL FILTERS - START """
 
 def getEndPoints(intervals):
     return list(map(lambda v : v[1], intervals))
-
-
 
 def increasingAveragesFilter(dataList):
     avg10 = para.averageLastList(dataList, 10)
@@ -151,9 +163,9 @@ def increasingAveragesFilter(dataList):
 
     return lambda intervals : filter(fun, intervals)
 
-
-
 """ REGION: INTERVAL FILTERS - END """
+
+
 
 """ REGION: UTILITY - START """
 
@@ -178,11 +190,8 @@ def findFirstGroupContainingPoint(groups, point):
             return group
     return None
 
-
-
 def yearsToDays(years):
     return years*250 #250 working days in a year.
-
 
 # Given an array(list) arr, and a window of size wSize,
 # |------[-------]--------|
@@ -393,6 +402,9 @@ def main():
     plotDoubleTopsFiltered(data, True, False, start=start, end=end)
 
 
+""" REGION: CONDITION DEFINITIONS - START """
+# These are conditions used by grouping.redefineGroupingConditions  (in grouping.py)
+
 conditionBreakHigh = (byPoints,
                     compose(breakHigh(yearsToDays(1), yearsToDays(5)), using('Close'))
                     )
@@ -404,6 +416,8 @@ conditionDoubleTops = (byPoints,
 conditionDoubleTopsFiltered = (byPoints,
                     compose(getEndPoints, findDoubleTopsFiltered),
                     )
+
+""" REGION: CONDITION DEFINITIONS - START """
 
 
 if __name__ == '__main__':
