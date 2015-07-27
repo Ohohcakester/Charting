@@ -11,13 +11,14 @@ import display
 import testalgos
 import weightoptimisation
 import util
+import constants as const
 
 # parameters.readFile will write to two variables:
 data = {}
 headers = []
 
 def main():
-    choice = 1
+    choice = 0
 
     options = {
         0:runTests,
@@ -48,7 +49,7 @@ def runDataSelect():
 
     for f in dataFiles:
         runDataSelectOn(f)
-    #dataselect.run('data/ABERDEEN_ASIA_PACIFIC_INCOME_FD.csv')
+    #dataselect.run('data_/ABERDEEN_ASIA_PACIFIC_INCOME_FD.csv')
 
 
 def runDataSelectOn(fileName):
@@ -79,7 +80,7 @@ def findDoubleTops():
             print(intervals)
 
 def viewGraph():
-    fileName = 'data/F_5_NETWORKS_INC.csv'
+    fileName = 'data_/F_5_NETWORKS_INC.csv'
     start, end = 200,1000
 
     data, headers = para.readFile(fileName)
@@ -106,7 +107,7 @@ def runVisualise():
     groups = grouping.groupUp(data, data['Close'])
 
     target = targetGroup
-    targetNext = target+util.ma
+    targetNext = target+const.ma
     results = testalgos.compareAllGroupsBefore(groups, target)
     results2 = testalgos.compareAllGroupsBefore(groups, targetNext)
     #results2 = compareAllGroupsTo(groups, targetNext)
@@ -125,7 +126,7 @@ def runVisualise():
     totalRank = 0
     ranks = []
     for v in results[0:10]:
-        rank = testalgos.getRank(results2, v[0]+util.ma)
+        rank = testalgos.getRank(results2, v[0]+const.ma)
         totalRank += rank
         ranks.append(rank)
     print('Total Rank = ' + str(totalRank))
@@ -139,11 +140,11 @@ def runVisualise():
         print('Chosen group:')
         print('Number ' + str(v[0]) + ', SimilarityScore = ' + str(v[2]))
         print('Matching Group:')
-        print('Number ' + str(v[0]+util.ma) + ', Rank = ' + str(testalgos.getRank(results2, v[0]+util.ma)))
+        print('Number ' + str(v[0]+const.ma) + ', Rank = ' + str(testalgos.getRank(results2, v[0]+const.ma)))
         print('Plotting Target Next Group (blue)')
         display.plotnormalizedWith(data, groups[targetNext], [similarity.byFirst])
         print('Plotting Predicted Next Group (green)')
-        display.plotnormalizedWith(data, groups[v[0]+util.ma], [similarity.byFirst])
+        display.plotnormalizedWith(data, groups[v[0]+const.ma], [similarity.byFirst])
         plt.show()
 
 

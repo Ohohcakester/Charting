@@ -393,7 +393,7 @@ configureCriteriaOptions()
 """ REGION: INITIALISATION - END """
 
 def main():
-    #data, headers = para.readFile('data/AKAMAI_TECHNOLOGIES_INC.csv')
+    #data, headers = para.readFile('data_/AKAMAI_TECHNOLOGIES_INC.csv')
     data, headers = para.readFile('data_334111/FUSION_I_O_INC.csv')
 
     start = None

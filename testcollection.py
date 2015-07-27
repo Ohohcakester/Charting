@@ -3,7 +3,7 @@
 def readTests(chooseCollection = None):
     d = {}
 
-    if chooseCollection == None: chooseCollection = 'dtf'
+    if chooseCollection == None: chooseCollection = 'trun'
 
     testFileName = {
         'trun': 'testcases/fyh_truncated.txt',

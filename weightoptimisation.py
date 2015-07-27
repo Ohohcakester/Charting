@@ -8,6 +8,7 @@ import tradingmeasure
 import pyswarm
 import dataselect
 import util
+import constants as const
 
 keys = ['Close', 'RatioClose', 'AvgClose', 'DiffCloseSign', 'RunningRatio']
 
@@ -112,7 +113,7 @@ def testAlgoWeighted(algo, target, weightDataFun):
     groupsWeighted = grouping.groupUp(data, weightDataFun(data))
     groupsClose = grouping.groupUp(data, data['Close'])
 
-    targetNext = target+util.ma
+    targetNext = target+const.ma
     if targetNext >= len(groupsWeighted):
         return None
     similarity.normalizeFuns = [similarity.byMean]
@@ -132,11 +133,11 @@ def testAlgoWeighted(algo, target, weightDataFun):
     nResults = 10
 
     for v in results[0:nResults]:
-        rank = testalgos.getRank(results2, v[0]+util.ma)
+        rank = testalgos.getRank(results2, v[0]+const.ma)
         totalRank += rank
-        lpScore += similarity.computeWith(groupsClose[v[0]+util.ma], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
+        lpScore += similarity.computeWith(groupsClose[v[0]+const.ma], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
-    dataLists = testalgos.getDataLists(groupsClose, results[0:nResults], util.ma)
+    dataLists = testalgos.getDataLists(groupsClose, results[0:nResults], const.ma)
     money = tradingmeasure.computeWithFunOn(dataLists, groupsClose[targetNext][2], tradePolicy, tradingPreprocess)
     #totalRank *= 100        # normalize totalRank for equal weightage.
     #totalRank /= len(results2) # normalize totalRank for equal weightage.

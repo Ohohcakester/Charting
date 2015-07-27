@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import similarity
 import analyse
 import util
+import constants as const
 
 def plotgroup(data, group):
     start, end = group[0], group[1]
@@ -31,8 +32,8 @@ def plotnormalizedWith(data, group, normalizeFuns):
     #plt.show()
 
 
-def nameToFile(s):
-    return 'data/' + s + '.csv'
+def nameToFile(s, datasetname = ''):
+    return 'data_' + datasetname + '/' + s + '.csv'
 
 def bitmapToStr(bitmap):
     return ''.join(map(str,bitmap))
@@ -55,7 +56,7 @@ def printgroupattrs(group, dates):
 
 def plotAverageHighLow(groups, results, compareTo):
     import statistics
-    lists = list(map(lambda v : groups[v[0]+util.ma][2][:], results))
+    lists = list(map(lambda v : groups[v[0]+const.ma][2][:], results))
     for i in range(0,len(lists)):
         lists[i] = similarity.byFirst(lists[i])
 

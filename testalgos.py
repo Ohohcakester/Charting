@@ -4,6 +4,7 @@ import grouping
 import tradingmeasure
 import parameters as para
 import util
+import constants as const
 
 #testOutputFilename = 'testresults.txt'
 testOutputFilename = 'testresults_test.txt'
@@ -86,7 +87,7 @@ algosToTest = {
 }
 
 # test only sts
-algosToTest = {
+algosToTest0 = {
     'sts': similarity.tsdist('stsDistance'),
 }
 
@@ -100,7 +101,7 @@ def testAlgo(algo, target):
     dates = data['Date']
     groups = grouping.groupUp(data, data['Close'])
 
-    targetNext = target+util.ma
+    targetNext = target+const.ma
     if targetNext >= len(groups):
         return None
     similarity.normalizeFuns = [similarity.byMean]
@@ -125,11 +126,11 @@ def testAlgo(algo, target):
     lpScore = 0
     nResults = 10
     for v in results[0:nResults]:
-        rank = getRank(results2, v[0]+util.ma)
+        rank = getRank(results2, v[0]+const.ma)
         totalRank += rank
-        lpScore += similarity.computeWith(groups[v[0]+util.ma], groups[targetNext], [similarity.byFirst], similarity.lpNorms(2))
+        lpScore += similarity.computeWith(groups[v[0]+const.ma], groups[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
-    dataLists = getDataLists(groups, results[0:nResults], util.ma)
+    dataLists = getDataLists(groups, results[0:nResults], const.ma)
     money = tradingmeasure.computeWithFunOn(dataLists, groups[targetNext][2], tradePolicy, tradingPreprocess)
     #print(money)
     totalRank *= 100        # normalize totalRank for equal weightage.

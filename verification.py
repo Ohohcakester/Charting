@@ -258,7 +258,7 @@ def applyStrategy(strategy, futureData):
 
 def testMain():
     print("Verifying...")
-    fileName = 'data/F_5_NETWORKS_INC.csv'
+    fileName = 'data_/F_5_NETWORKS_INC.csv'
     for i in range(1500,650,-20):
         result = verify(fileName, i)
         print(result)

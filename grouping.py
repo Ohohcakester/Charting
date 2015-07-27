@@ -1,4 +1,5 @@
 import dataselect
+import constants as const
 
 # You have to configure this manually to use getweekday/isweekend/nextfewweeks.
 firstsaturday = 1
@@ -24,7 +25,7 @@ def splitIntoGroups(data, dataList, minDay = 0):
             #firstmonday = days[i] + ((7 - getweekday(days[i])) % 7)
 
             #start, end, bitmap = nextfewweeks(i, firstmonday, days, dates, 13)
-            start, end = nextndays(i, days, 75)
+            start, end = nextndays(i, days, const.groupSize)
             if start != None:
                 #group = (start, end, dataList[start:end], bitmap)
                 group = (start, end, dataList[start:end], len(groups))
@@ -38,7 +39,7 @@ def splitIntoGroupsFree(data, dataList, minDay = 0):
     groups = []
     curr = minDay
     interval = 21
-    groupSize = 75
+    groupSize = const.groupSize
     dataLength = len(dataList)
 
     while True:
@@ -62,7 +63,7 @@ def splitIntoGroupsShifted(data, dataList, minDay = 0):
         if dates[i].month != lastmonth and dates[i].day >=23:
             lastmonth = dates[i].month
 
-            start, end = nextndays(i, days, 75)
+            start, end = nextndays(i, days, const.groupSize)
             if start != None:
                 #group = (start, end, dataList[start:end], bitmap)
                 group = (start, end, dataList[start:end], len(groups))
@@ -87,7 +88,7 @@ def splitIntoGroupsVariableMonths(data, dataList, minDay = 0):
 
             lastmonth = dates[i].month
 
-            start, end = nextndays(i, days, 75)
+            start, end = nextndays(i, days, const.groupSize)
             if start != None:
                 #group = (start, end, dataList[start:end], bitmap)
                 group = (start, end, dataList[start:end], len(groups))
@@ -105,7 +106,7 @@ def splitIntoGroupsFreeMonths(data, dataList, minDay = 0):
     for i in range(minDay,len(days)):
         if dates[i].month != lastmonth:
             lastmonth = dates[i].month
-            start, end = nextndays(i, days, 75)
+            start, end = nextndays(i, days, const.groupSize)
             if start != None:
                 group = (start, end, dataList[start:end], len(groups))
                 groups.append(group)

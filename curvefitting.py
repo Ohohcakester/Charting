@@ -18,7 +18,7 @@ def main():
 
 def testCubicFit():
     import matplotlib.pyplot as plt
-    data, headers = para.readFile('data/3_D_SYSTEMS_CORP_DEL.csv')
+    data, headers = para.readFile('data_/3_D_SYSTEMS_CORP_DEL.csv')
     dates = data['Date']
     close = data['Close']
     start = 390
@@ -46,7 +46,7 @@ def testCubicFit():
 
 def testPolyFit():
     import matplotlib.pyplot as plt
-    data, headers = para.readFile('data/A_C_I_WORLDWIDE_INC.csv')
+    data, headers = para.readFile('data_/A_C_I_WORLDWIDE_INC.csv')
     dates = data['Date']
     close = data['Close']
     #groups = grouping.groupUp(data, close)
@@ -69,7 +69,7 @@ def testPolyFit():
 
 def bestPolyFit():
     import matplotlib.pyplot as plt
-    data, headers = para.readFile('data/3_D_SYSTEMS_CORP_DEL.csv')
+    data, headers = para.readFile('data_/3_D_SYSTEMS_CORP_DEL.csv')
     dates = data['Date']
     close = data['Close']
     #groups = grouping.groupUp(data, close)

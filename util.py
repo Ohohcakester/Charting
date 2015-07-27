@@ -1,10 +1,6 @@
-#Lightweight functions only with no imports!
+""" Lightweight utility functions only with no imports! """
+""" Importing util.py should not take a long time like similarity.py """
 
-# ma: months ahead
-# When running a test on an algorithm, we try to predict the values of a group.
-# 
-# Note that there is one group per month.
-ma = 4
 
 def getRandomSublist(arr, size):
     import random
