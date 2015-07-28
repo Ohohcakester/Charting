@@ -50,6 +50,7 @@ def configureCriteriaOptions():
 
 """ REGION: MAIN CONTROLS - START """
 
+# This function is the main function to call in dataselect.py
 # choice is numeric (which configuration to use)
 def findMatches(data, groups, choice = None):
     global defaultChoice, criteriaOptions
@@ -62,16 +63,23 @@ def findMatches(data, groups, choice = None):
     return criteriaType(data, groups, criteriaFun)
 
 
+# An alternative function to call in dataselect.py.
+# Allows you to specify the criteriaType and criteriaFun manually instead of 
+# using one of the existing configurations.
 def findMatchesWith(data, groups, criteriaType, criteriaFun):
     return criteriaType(data, groups, criteriaFun)
 
 
+# One of the criteria types.
+# Used for individual criteria.
 def byIndividual(fulldata, groups, criteria):
     def fun(group):
         return criteria(fulldata, group[0], group[1])
     return list(filter(fun, groups))
 
 
+# One of the criteria types.
+# Used for points criteria.
 # Assumes groups are sorted in chronological order (increasing)
 def byPoints(fulldata, groups, criteria):
     markedPoints = criteria(fulldata)
@@ -88,8 +96,8 @@ def byPoints(fulldata, groups, criteria):
 """ REGION: INDIVIDUAL CRITERION - START """
 # Format of an individual criteria (byIndividual) function:
 # function(fulldata, startIndex, endIndex)
-# Where startIndex, endIndex refers to the start, end points of the group.
-# returns: True if the group is to be selected, False if the group is to be omitted.
+# where startIndex, endIndex refers to the start, end points of the group.
+# Returns: True if the group is to be selected, False if the group is to be omitted.
 
 def randomMatch(probability):
     import random
@@ -114,8 +122,8 @@ def containsPoints(markedPoints):
 """ REGION: POINTS CRITERION - START """
 # Format of a points criteria (byPoints) function:
 # function(fulldata)
-# returns: A set of points (by index) in the data which match the criteria.
-# - later on, we can use these points to select groups by identifying the groups that contain these points.
+# Returns: A set of points (by index) in the data which match the criteria.
+# Later on, we use these points to select groups by identifying the first group that contains each point.
 
 def randomPoints(frac):
     import random
@@ -179,6 +187,7 @@ def compose(*funs):
         return x
     return composed
 
+# A function used to convert data -> data[dataType]. Useful to compose with other functions.
 def using(dataType):
     def fun(data):
         return data[dataType]
@@ -190,13 +199,15 @@ def findFirstGroupContainingPoint(groups, point):
             return group
     return None
 
+# An approximate conversion for the number of working days in a year.
 def yearsToDays(years):
     return years*250 #250 working days in a year.
 
-# Given an array(list) arr, and a window of size wSize,
+# A utility function to efficiently compute the maximum values of a sliding window on an array.
+# Given an array/list arr, and a window of size wSize,
 # |------[-------]--------|
 #         '-max-'
-# For window positions from 0 to len(data) - wSize,
+# For all possible window positions, from 0 to len(data) - wSize,
 # Return the index of the maximum value of arr[] in that window.
 # currently assuming all values of arr are positive. (so that -1 works.)
 # O(n) algorithm.
@@ -234,15 +245,15 @@ def generateMaxIndexList(arr, wSize):
         resultList.append(nextMaxPoint)
     return resultList
 
-
+# Opposite of generateMaxIndexList above. Also O(n).
 def generateMinIndexList(arr, wSize):
     maxValue = max(arr)
     negList = list(map(lambda x : maxValue - x, arr))
     return generateMaxIndexList(negList, wSize)
 
 
-
-
+# Helper function for finding Double Tops
+# returns a function that can detects whether an index i is a peak value.
 def peakIdentifierFun(dataList, peakGap):
     windowMax = generateMaxIndexList(dataList, peakGap*2)
     def isPeak(i):
@@ -250,6 +261,7 @@ def peakIdentifierFun(dataList, peakGap):
             dataList[i] >= dataList[windowMax[i-peakGap]]
     return isPeak
 
+# Helper function for finding Double Tops (for drawing the peaks)
 # converts a boolean function to a functoin that returns high for True, low for False.
 def boolToIntFun(boolFun, low, high):
     def intFun(x):
@@ -258,6 +270,7 @@ def boolToIntFun(boolFun, low, high):
         return low
     return intFun
 
+# Double Tops Filtered: Finds points which are double tops, which satisfy the "increasing averages" condition.
 def findDoubleTopsFiltered(data):
     intervals = findDoubleTops(data)
     return increasingAveragesFilter(data['Close'])(intervals)
@@ -286,7 +299,7 @@ def plotDoubleTopsFiltered(data, plotGraphs = False, plotPeaks = False, start = 
 
     findDoubleTops(data, plotGraphs, plotPeaks, start=start, end=end)
 
-
+# Find Double Tops criteria function. Also can be used to plot the double tops by setting the optional arguments.
 # start / end = None means default values.
 def findDoubleTops(data, plotGraphs = False, plotPeaks = False, start = None, end = None):
     dates = data['Date']
