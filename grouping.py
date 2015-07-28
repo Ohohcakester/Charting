@@ -180,7 +180,6 @@ def isweekend(day):
 
 def getweekday(day):
     # 0 is monday, 6 is sunday.
-    global firstsaturday
     return (day-firstsaturday-2)%7
 
 # returns startindex, endindex, bitmap

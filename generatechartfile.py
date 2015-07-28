@@ -12,7 +12,7 @@ dataFilesDir = 'data_'+datasetname+'/'
 nameMap = None
 
 def createNameMap():
-    global nameMap, nameLookupFile
+    global nameMap
     nameMap = {}
     f = open(nameLookupFile)
     headers = f.readline().split(',')
@@ -28,14 +28,12 @@ def createNameMap():
 
 
 def translateName(name):
-    global nameMap
     if nameMap == None:
         createNameMap()
     return nameMap[name]
     # wow, I have to get this from alldata.csv, and data from para.
 
 def toFileName(name):
-    global dataFilesDir
     return dataFilesDir + name + '.csv'
 
 def translateDate(fileName, dayIndex):
@@ -65,7 +63,6 @@ def getHeaders(groupSize):
     return ','.join(headers)
 
 def generateChartFile():
-    global sourceDir, outputFile
     import os
     rowFiles = os.listdir(sourceDir)
 

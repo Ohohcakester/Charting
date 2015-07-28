@@ -5,7 +5,6 @@ r = rpy2.robjects.r
 ts = importr('TSdist')
 
 def run_ts(data1, data2, measureName, *args, **kwargs):
-    global ts
     measureName = measureName.replace('.', '_')
     measureFun = getattr(ts, measureName)
     d1 = rpy2.robjects.FloatVector(data1)

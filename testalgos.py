@@ -97,7 +97,6 @@ def testAlgo(algo, target):
 #    testAlgoOnData(algo, target, data['Close'])
 #
 #def testAlgoOnData(algo, target, dataList):
-    global data
     dates = data['Date']
     groups = grouping.groupUp(data, data['Close'])
 

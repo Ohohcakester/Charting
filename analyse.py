@@ -13,12 +13,8 @@ import weightoptimisation
 import util
 import constants as const
 
-# parameters.readFile will write to two variables:
-data = {}
-headers = []
-
 def main():
-    choice = 0
+    choice = 1
 
     options = {
         0:runTests,
@@ -100,7 +96,7 @@ def runVisualise():
     #fileName = 'table.csv'
     targetGroup = 89
 
-    global data, headers
+    #global data, headers
     data, headers = para.readFile(fileName)
     dates = data['Date']
     close = data['Close']

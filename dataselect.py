@@ -53,7 +53,6 @@ def configureCriteriaOptions():
 # This function is the main function to call in dataselect.py
 # choice is numeric (which configuration to use)
 def findMatches(data, groups, choice = None):
-    global defaultChoice, criteriaOptions
     if choice == None: choice = defaultChoice
 
     criteriaFun, criteriaType, singleTS = criteriaOptions[choice]

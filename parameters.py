@@ -15,7 +15,7 @@ cachedFiles = {}
 # returns a pair (data, headers).
 # data is a dictionary, headers is the keys of the dictionary in a fixed order.
 def readFile(fileName):
-    global data, headers, cachedFiles, caching
+    global data, headers, cachedFiles
     if caching == True:
         if fileName in cachedFiles:
             return cachedFiles[fileName]

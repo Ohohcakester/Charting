@@ -7,10 +7,8 @@ probability = 0.05
 
 def computeResults(datalist, predictSize = None):
     if predictSize == None:
-        global defaultPredictSize
-        predictSize = defaultPredictSiz
+        predictSize = defaultPredictSize
 
-    global probability
     results = []
     for i in range(0,len(datalist)-predictSize):
         if random.random() < probability:

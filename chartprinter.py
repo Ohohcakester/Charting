@@ -17,7 +17,6 @@ class ChartPrinter:
         self.today = today
 
     def generateFileName(self):
-        global path
         li = [self.company,self.today,self.algo,self.groupSize,self.predictSize]
         li = map(str, li)
         return path + '/' + '_'.join(li) + '.row'
