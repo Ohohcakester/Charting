@@ -1,11 +1,12 @@
 import similarity
 import util
 
-def computeWithFun(data, policyFun):
-    buySellPoints = policyFun(data)
-    return computeWithPoints(data, buySellPoints)
+""" REGION: MAIN API - START """
 
-
+# Compute the amount of return when policyFun is applied to targetData.
+# sourceData : The data (prices) used to decide the strategy (generally, the predicted data)
+# targetData : The actual data (prices) (unknown)
+# policyFun : The trading policy to be used.
 def computeWithFunOn(sourceData, targetData, policyFun, preprocessFun = None):
     if preprocessFun != None:
         sourceData = preprocessFun(sourceData)
@@ -13,34 +14,71 @@ def computeWithFunOn(sourceData, targetData, policyFun, preprocessFun = None):
     buySellPoints = policyFun(sourceData)
     return computeWithPoints(targetData, buySellPoints)
 
+# Compute the amount of return by the trading policy policyFun when the future data is fully known.
+# i.e. computeWithFunOn, but where sourceData = targetData.
+def computeReturnForFullyKnownData(data, policyFun, preprocessFun = None):
+    return computeWithFunOn(data, data, policyFun, preprocessFun)
 
-# policyFun must be a function that returns a strategy.
+# policyFun must be a function that returns a strategy(index, futureData)
 def computeWithStrategy(sourceData, targetData, policyFun):
     strategy = policyFun(sourceData)
-    return computeWithPoints(targetData, strategy)
+    return computeWithPointsUsingStrategy(targetData, strategy)
+
+""" REGION: MAIN API - END """
 
 
 # buySellPoints is a list/tuple that alternates between a buy and a sell..
-def computeWithPoints(data, buySellPoints):
-    data = similarity.byFirst(data)
+def computeWithPoints(futureData, buySellPoints):
+    futureData = similarity.byFirst(futureData)
     money = 1
     stock = 0
     holdingStocks = False
     for i in range(0,len(buySellPoints)):
         if holdingStocks:
             #sell
-            money += stock*data[buySellPoints[i]]
+            money += stock*futureData[buySellPoints[i]]
             stock = 0
             holdingStocks = False
         else:
             #buy
-            stock = money / data[buySellPoints[i]]
+            stock = money / futureData[buySellPoints[i]]
             money = 0
             holdingStocks = True
 
     # Sell remaining stock at end of period.
     if holdingStocks:
-        money += stock*data[len(data)-1]
+        money += stock*futureData[len(futureData)-1]
+
+    return money
+
+
+# UNTESTED
+# strategy(index, futureData). 1 means buy, -1 means sell, 0 means do nothing.
+def computeWithPointsUsingStrategy(futureData, strategy):
+    futureData = similarity.byFirst(futureData)
+    money = 1
+    stock = 0
+    holdingStocks = False
+    for i in range(0,len(futureData)):
+        action = strategy(i, futureData[:i+1])
+        if action == 0:
+            continue
+        elif action == -1:
+            if not holdingStocks: return
+            #sell
+            money += stock*futureData[buySellPoints[i]]
+            stock = 0
+            holdingStocks = False
+        else: # action == 1
+            if holdingStocks: return
+            #buy
+            stock = money / futureData[buySellPoints[i]]
+            money = 0
+            holdingStocks = True
+
+    # Sell remaining stock at end of period.
+    if holdingStocks:
+        money += stock*futureData[len(futureData)-1]
 
     return money
 
@@ -74,6 +112,7 @@ def averageData(dataLists):
 
 """ REGION: TRADING POLICIES : STRAETGY - START """
 # Strategy(index, futureData)
+# The input futureData is only the future data up till the day being analysed i. (i.e. futureData[0:i+1])
 # 1 means buy, -1 means sell, 0 means do nothing.
 
 def buyingThreshold(fraction):
@@ -216,4 +255,4 @@ if __name__ == '__main__':
     print(str(test[lr[1]]) + ' ' + str(test[lr[0]]))
     print(test[lr[1]]-test[lr[0]])
     print(computeWithPoints(test, lr))
-    print(computeWithFun(test, largestReturn))
+    print(computeReturnForFullyKnownData(test, largestReturn))
