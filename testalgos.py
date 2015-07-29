@@ -112,14 +112,16 @@ def testAlgo(algo, target):
     results.sort(key=lambda x : x[2])
     results2.sort(key=lambda x : x[2])
 
+    ### Uses Average Data: useOnlyAverageData = True
     #tradePolicy = tradingmeasure.dontSell
     #tradePolicy = tradingmeasure.sellOrKeep
     #tradePolicy = tradingmeasure.riskAverseSellOrKeep
-    tradePolicy = tradingmeasure.confidenceFilter(0.2, tradingmeasure.sellOrKeep)
     #tradePolicy = tradingmeasure.largestReturn
-    
-    #tradingPreprocess = tradingmeasure.averageData
-    tradingPreprocess = None
+
+    ### Doesn't use Average Data: useOnlyAverageData = False
+    tradePolicy = tradingmeasure.confidenceFilter(0.2, tradingmeasure.sellOrKeep)
+
+    useOnlyAverageData = False
 
     totalRank = 0
     lpScore = 0
@@ -130,7 +132,10 @@ def testAlgo(algo, target):
         lpScore += similarity.computeWith(groups[v[0]+const.ma], groups[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
     dataLists = getDataLists(groups, results[0:nResults], const.ma)
-    money = tradingmeasure.computeWithFunOn(dataLists, groups[targetNext][2], tradePolicy, tradingPreprocess)
+    if usingOnlyAverageData:
+        dataLists = tradingmeasure.averageData(dataLists)
+
+    money = tradingmeasure.computeWithFunOn(dataLists, groups[targetNext][2], tradePolicy)
     #print(money)
     totalRank *= 100        # normalize totalRank for equal weightage.
     totalRank /= len(results2) # normalize totalRank for equal weightage.

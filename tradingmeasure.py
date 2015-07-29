@@ -7,17 +7,14 @@ import util
 # sourceData : The data (prices) used to decide the strategy (generally, the predicted data)
 # targetData : The actual data (prices) (unknown)
 # policyFun : The trading policy to be used.
-def computeWithFunOn(sourceData, targetData, policyFun, preprocessFun = None):
-    if preprocessFun != None:
-        sourceData = preprocessFun(sourceData)
-
+def computeWithFunOn(sourceData, targetData, policyFun):
     buySellPoints = policyFun(sourceData)
     return computeWithPoints(targetData, buySellPoints)
 
 # Compute the amount of return by the trading policy policyFun when the future data is fully known.
 # i.e. computeWithFunOn, but where sourceData = targetData.
-def computeReturnForFullyKnownData(data, policyFun, preprocessFun = None):
-    return computeWithFunOn(data, data, policyFun, preprocessFun)
+def computeReturnForFullyKnownData(data, policyFun):
+    return computeWithFunOn(data, data, policyFun)
 
 # policyFun must be a function that returns a strategy(index, futureData)
 def computeWithStrategy(sourceData, targetData, policyFun):
@@ -147,7 +144,7 @@ def buyingThreshold(fraction):
 
 
 """ REGION: TRADING POLICIES : GENERAL - START """
-# these algorithms are run with a None preprocessing function.
+# these algorithms are run using a set of dataLists for sourceData.
 
 # bails and does nothing when it is not confident in its answer.
 def confidenceFilter(threshold, policy):
@@ -163,7 +160,9 @@ def confidenceFilter(threshold, policy):
 
 
 """ REGION: TRADING POLICIES : USING AVERAGEDATA ONLY - START """
-# These algorithms must be preprocessed with averageData.
+# these algorithms are run using a single dataList for sourceData.
+# If you have a set of dataLists instead, preprocess them with the averageData function first
+# to compute a single dataList as the average of the multiple dataLists.
 
 def maxValueSell(data):
     sellPoint = max(enumerate(data), key=lambda t:t[1])[0]

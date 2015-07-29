@@ -126,7 +126,7 @@ def testAlgoWeighted(algo, target, weightDataFun):
     results2.sort(key=lambda x : x[2])
 
     tradePolicy = tradingmeasure.sellOrKeep
-    tradingPreprocess = tradingmeasure.averageData
+    usingOnlyAverageData = True
 
     totalRank = 0
     lpScore = 0
@@ -138,7 +138,10 @@ def testAlgoWeighted(algo, target, weightDataFun):
         lpScore += similarity.computeWith(groupsClose[v[0]+const.ma], groupsClose[targetNext], [similarity.byFirst], similarity.lpNorms(2))
     
     dataLists = testalgos.getDataLists(groupsClose, results[0:nResults], const.ma)
-    money = tradingmeasure.computeWithFunOn(dataLists, groupsClose[targetNext][2], tradePolicy, tradingPreprocess)
+    if usingOnlyAverageData:
+            dataLists = tradingmeasure.averageData(dataLists)
+
+    money = tradingmeasure.computeWithFunOn(dataLists, groupsClose[targetNext][2], tradePolicy)
     #totalRank *= 100        # normalize totalRank for equal weightage.
     #totalRank /= len(results2) # normalize totalRank for equal weightage.
 
