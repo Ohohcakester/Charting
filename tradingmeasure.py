@@ -107,7 +107,7 @@ def averageData(dataLists):
 """ REGION: UTILITY - END """
 
 
-""" REGION: TRADING POLICIES : STRAETGY - START """
+""" REGION: TRADING POLICIES : STRATEGY - START """
 # Strategy(index, futureData)
 # The input futureData is only the future data up till the day being analysed i. (i.e. futureData[0:i+1])
 # 1 means buy, -1 means sell, 0 means do nothing.
@@ -139,14 +139,17 @@ def buyingThreshold(fraction):
 
 
 
-""" REGION: TRADING POLICIES : STRAETGY - END """
+""" REGION: TRADING POLICIES : STRATEGY - END """
 
 
 
-""" REGION: TRADING POLICIES : GENERAL - START """
+""" REGION: TRADING POLICIES : USING MULTIPLE DATALISTS - START """
 # these algorithms are run using a set of dataLists for sourceData.
 
-# bails and does nothing when it is not confident in its answer.
+# Not exactly a Trading Measure, but a function that takes in a trading measure from "Using AverageData Only"
+# And returns a Trading Measure that uses multiple datalists to compute a "confidence value" using the standard deviation.
+# This new Trading Measure bails and does nothing when it is not confident in the predicted data.
+# If it is confident, it will trade normally using the trading measure given.
 def confidenceFilter(threshold, policy):
     def fun(data):
         meanList, sdList = computeMeanAndSD(data)
@@ -156,7 +159,7 @@ def confidenceFilter(threshold, policy):
     return fun
     
 
-""" REGION: TRADING POLICIES : GENERAL - END """
+""" REGION: TRADING POLICIES : USING MULTIPLE DATALISTS - END """
 
 
 """ REGION: TRADING POLICIES : USING AVERAGEDATA ONLY - START """
