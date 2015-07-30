@@ -1,5 +1,4 @@
 import os
-import traceback
 import parameters as para
 
 """doc
