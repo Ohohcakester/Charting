@@ -1,8 +1,11 @@
+# Existing Modules
 import parameters as para
 import similarity
 import dataselect
 import tradingmeasure
 import util
+
+# Verification-releated modules
 import verificationconfig
 import chartprinter
 import randomverify
@@ -37,9 +40,9 @@ def getKnownFun(tomorrowIndex):
         return dataList[:tomorrowIndex]
     return fun
 
-def getFutureFun(tomorrowIndex, answerLength):
+def getFutureFun(tomorrowIndex, length):
     def fun(dataList):
-        return dataList[tomorrowIndex:tomorrowIndex+answerLength]
+        return dataList[tomorrowIndex:tomorrowIndex+length]
     return fun
 
 def getDefaultEarnings(futureData):
@@ -240,7 +243,7 @@ def applyStrategy(strategy, futureData):
     #print(list(map(lambda x : strategy(x,prices), range(0,len(prices)))))
 
     for i in range(0,len(prices)):
-        action = strategy(i, prices)
+        action = strategy(i, prices[:i+1])
         if action == 1:
             #buy:
             stock += money / prices[i]
