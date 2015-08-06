@@ -49,7 +49,6 @@ def computeWithPoints(futureData, buySellPoints):
     return money
 
 
-# UNTESTED
 # strategy(index, futureData). 1 means buy, -1 means sell, 0 means do nothing.
 def computeWithPointsUsingStrategy(futureData, strategy):
     futureData = similarity.byFirst(futureData)
@@ -61,15 +60,17 @@ def computeWithPointsUsingStrategy(futureData, strategy):
         if action == 0:
             continue
         elif action == -1:
-            if not holdingStocks: return
+            if not holdingStocks: continue
             #sell
-            money += stock*futureData[buySellPoints[i]]
+            print('Sell ' + str(i))
+            money += stock*futureData[i]
             stock = 0
             holdingStocks = False
         else: # action == 1
-            if holdingStocks: return
+            if holdingStocks: continue
             #buy
-            stock = money / futureData[buySellPoints[i]]
+            print('Buy ' + str(i))
+            stock = money / futureData[i]
             money = 0
             holdingStocks = True
 
@@ -108,33 +109,46 @@ def averageData(dataLists):
 
 
 """ REGION: TRADING POLICIES : STRATEGY - START """
+# These trading measures take in data as input, and return a strategy.
 # Strategy(index, futureData)
 # The input futureData is only the future data up till the day being analysed i. (i.e. futureData[0:i+1])
 # 1 means buy, -1 means sell, 0 means do nothing.
 
+
+# A trading measure that returns a strategy that does nothing.
+def doNothing(data):
+    return doNothingStrategy
+
+# A strategy that does nothing.
+def doNothingStrategy(index, futureData):
+    return 0
+
 def buyingThreshold(fraction):
     def fun(data):
         meanList, sdList = computeMeanAndSD(data)
-        last = len(data)-1
-        if data[last] < data[0]:
-            return None
+        last = len(meanList)-1
+        if meanList[last] < meanList[0]:
+            return doNothingStrategy
 
         class Strategy:
             def __init__(self, limit):
                 self.bought = False
                 self.limit = limit
-                self.data = data
+                self.meanList = meanList
             def decide(self, i, futureData):
                 if self.bought:
                     return 0
-                if futureData[i] < limit:
+                if futureData[i] <= limit:
                     self.bought = True
                     return 1
+                return 0
 
-        limit = min(data)
+        limit = min(meanList)
         limit = 1 - fraction*(1-limit)
-        strat = Strategy(limit)
+        strategy = Strategy(limit)
         return strategy.decide
+
+    return fun
 
 
 
@@ -247,10 +261,14 @@ def largestReturn(data):
 if __name__ == '__main__':
     import random
     test = []
+    test2 = []
     for i in range(0,20):
         test.append(50+random.randrange(100))
+    for i in range(0,20):
+        test2.append(50+random.randrange(100))
 
     print(test)
+    print(test2)
     print('Length = ' + str(len(test)))
     lr = largestReturn(test)
     print(lr)
@@ -258,3 +276,5 @@ if __name__ == '__main__':
     print(test[lr[1]]-test[lr[0]])
     print(computeWithPoints(test, lr))
     print(computeReturnForFullyKnownData(test, largestReturn))
+    print(computeWithStrategy([test,test2], test, buyingThreshold(0.5)))
+    print(test[-1]/test[0])
