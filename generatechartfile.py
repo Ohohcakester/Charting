@@ -1,12 +1,12 @@
 import parameters as para
 
-datasetname = ''
+datasetname = '334111'
 
 sourceDir = 'ChartOutput_'+datasetname
 outputFile = 'combinedChart_'+datasetname+'.txt'
 
-#nameLookupFile = 'dataNew/all/'+datasetname+'.csv'
-nameLookupFile = 'data_/all/alldata.csv'
+nameLookupFile = 'dataNew/all/'+datasetname+'.csv'
+#nameLookupFile = 'data_/all/alldata.csv'
 dataFilesDir = 'data_'+datasetname+'/'
 
 nameMap = None
