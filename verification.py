@@ -77,8 +77,8 @@ def verify(fileName, todayIndex):
     strategy = decideStrategy(knownData, groupSize, predictSize, chart)
     if strategy == None: return (1, False, defaultEarnings) #dontTrade
 
-    result = applyStrategy(strategy, futureData)
-    return (result, True, defaultEarnings)
+    result, traded = applyStrategy(strategy, futureData)
+    return (result, traded, defaultEarnings)
 
 """ TEST FRAMEWORK - END """
 
@@ -192,10 +192,7 @@ def decideStrategy(knownData, groupSize, predictSize, chart = None):
     dates = knownData['Date']
     fullData = knownData['Close']
     points = getDataselectPoints(knownData)
-    #print(points)
-    #if len(points) > 0 and len(fullData)-1 in points:
-    #    print(points)
-    #    print(len(fullData)-1)
+
     if len(fullData)-1 not in points:
         return dontTrade()
 
@@ -204,8 +201,6 @@ def decideStrategy(knownData, groupSize, predictSize, chart = None):
     if (len(groups) < 20): return dontTrade()
 
     target = len(groups) - 1
-    #printGroups(groups)
-    # TODO: What are the group indexes for? Reversing them seems to throw it all over the place...
 
     """
     matches = dataselect.findMatches(knownData, groups, 2)
@@ -234,7 +229,8 @@ def decideStrategy(knownData, groupSize, predictSize, chart = None):
 
     return strategy
 
-
+# returns a tuple (money, traded).
+# money is how much money is left at the end, and traded is true iff some trading was done that month.
 def applyStrategy(strategy, futureData):
     prices = futureData['Close']
     money = 1
@@ -242,22 +238,25 @@ def applyStrategy(strategy, futureData):
 
     #print(list(map(lambda x : strategy(x,prices), range(0,len(prices)))))
 
+    traded = False
     for i in range(0,len(prices)):
         action = strategy(i, prices[:i+1])
         if action == 1:
             #buy:
             stock += money / prices[i]
             money = 0
+            traded = True
         elif action == -1:
             #sell
             money += stock * prices[i]
             stock = 0
+            traded = True
 
     # Sell remaining stock at end of period.
     money += stock*prices[-1]
     stock = 0
 
-    return money
+    return money, traded
 
 def testMain():
     print("Verifying...")
@@ -289,8 +288,8 @@ def selectiveTestOnFile(fileName):
     length = len(data['Close']) - predictSize - 1
 
     cases = list(filter(lambda v : v < length, getDataselectPoints(data)))
-    #print('Cases: ' + str(cases))
     #cases = filter(lambda v : random.random() < 0.05, range(0,length))
+    #print('Cases: ' + str(cases))
 
     results = []
     for i in cases:
@@ -338,35 +337,49 @@ def main():
         tradedSD = 'N/A'
     else:
         tradedMean = statistics.mean(tradedPeriodsMoney)
-        tradedSD = statistics.stdev(tradedPeriodsMoney)
+        if tradedCount > 1:
+            tradedSD = statistics.stdev(tradedPeriodsMoney)
+        else:
+            tradedSD = 'N/A'
 
     if allCount == 0:
         allMean = 'N/A'
         allSD = 'N/A'
     else:
         allMean = statistics.mean(allPeriodsMoney)
-        allSD = statistics.stdev(allPeriodsMoney)
+        if allCount > 1:
+            allSD = statistics.stdev(allPeriodsMoney)
+        else:
+            allSD = 'N/A'
 
     if tradedControlCount == 0:
         tradedControlMean = 'N/A'
         tradedControlSD = 'N/A'
     else:
         tradedControlMean = statistics.mean(tradedControlMoney)
-        tradedControlSD = statistics.stdev(tradedControlMoney)
+        if tradedControlCount > 1:
+            tradedControlSD = statistics.stdev(tradedControlMoney)
+        else:
+            tradedControlSD = 'N/A'
 
     if randomControlCount == 0:
         randomControlMean = 'N/A'
         randomControlSD = 'N/A'
     else:
         randomControlMean = statistics.mean(randomControlMoney)
-        randomControlSD = statistics.stdev(randomControlMoney)
+        if randomControlCount > 1:
+            randomControlSD = statistics.stdev(randomControlMoney)
+        else:
+            randomControlSD = 'N/A'
 
     sb = []
     global resultsFile
     sb.append(resultsFile)
-    sb.append('Traded: ' + str(tradedCount) + ' / ' + str(allCount))
+    sb.append('Traded: ' + str(tradedCount))
     sb.append('Traded Periods Money: ' + str(tradedMean) + ' +/- ' + str(tradedSD))
+    sb.append('All: ' +  str(allCount))
     sb.append('All Periods Money: ' + str(allMean) + ' +/- ' + str(allSD))
+    sb.append('Traded Control: ' +  str(tradedControlCount))
     sb.append('Traded Control Money (All Periods): ' + str(tradedControlMean) + ' +/- ' + str(tradedControlSD))
     sb.append('')
     sb.append('Random Control Count: ' + str(randomControlCount))
