@@ -136,5 +136,5 @@ def avgRepair(group1, group2):
 
 #repairFun = avgRepair # repair is deprecated
 #measureFun = lpNorms(1)
-_measureFun = tsdist('stsDistance')
-_normalizeFuns = [byMean]
+_measureFun = None # tsdist('stsDistance')
+_normalizeFuns = None # [byMean]

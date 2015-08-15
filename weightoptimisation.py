@@ -112,8 +112,8 @@ def testAlgoWeighted(algo, target, weightDataFun, data):
     targetNext = target+const.ma
     if targetNext >= len(groupsWeighted):
         return None
-    similarity.normalizeFuns = [similarity.byMean]
-    similarity.measureFun = algo
+    similarity._normalizeFuns = [similarity.byMean]
+    similarity._measureFun = algo
     results = testalgos.compareAllGroupsBefore(groupsWeighted, target)
     results2 = testalgos.compareAllGroupsBefore(groupsClose, targetNext)
     

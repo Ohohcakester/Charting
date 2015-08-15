@@ -210,8 +210,8 @@ def decideStrategy(knownData, groupSize, predictSize, chart = None):
         return dontTrade()
     """
 
-    similarity.normalizeFuns = [similarity.byMean]
-    similarity.measureFun = similarityMeasure
+    similarity._normalizeFuns = [similarity.byMean]
+    similarity._measureFun = similarityMeasure
 
     results = compareAllGroupsBefore(groups, groupSize, target)
     

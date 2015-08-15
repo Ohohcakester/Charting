@@ -103,8 +103,8 @@ def testAlgo(algo, target):
     targetNext = target+const.ma
     if targetNext >= len(groups):
         return None
-    similarity.normalizeFuns = [similarity.byMean]
-    similarity.measureFun = algo
+    similarity._normalizeFuns = [similarity.byMean]
+    similarity._measureFun = algo
     results = compareAllGroupsBefore(groups, target)
     results2 = compareAllGroupsBefore(groups, targetNext)
     
